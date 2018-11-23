@@ -27,6 +27,7 @@ SET(PROGS
     test_circle_spin
     test_circle2
     test_collision
+    test_periodic
 )
 
 FOREACH(var ${PROGS})

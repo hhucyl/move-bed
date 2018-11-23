@@ -170,6 +170,7 @@ public:
     void AddSphereQ(Vec3_t &pos, double R);
     void AddDiskG(Vec3_t &pos, double R);
     void AddDisksG();
+    void adddiskG_sub(DEM::Disk *Pa);
     void AddSphereG(Vec3_t &pos, double R);
     void CalcForceQ();
     void SetZero();
@@ -240,6 +241,7 @@ public:
     std::vector<double> dS;     ///IBM
     // std::vector<LBM::Disk> Particles; ///DEM
     std::vector<DEM::Disk> Particles; ///DEM
+    std::vector<DEM::Disk> GhostParticles; ///DEM
     std::vector<std::pair<int,int>> ListofContacts;
     double dtdem;
 

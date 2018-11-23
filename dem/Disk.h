@@ -20,7 +20,9 @@ public:
     void Rotate      (double dt);
     void FixVeloc    () {vf=true,true,true; wf=true,true,true;};
     bool IsFree () {return !vf(0)&&!vf(1)&&!vf(2)&&!wf(0)&&!wf(1)&&!wf(2);}; ///< Ask if the particle has any constrain in its movement
-
+    bool Ghost;
+    void Periodic    (int modexy, Vec3_t &Box);
+    void Leave    (int modexy, Vec3_t &Box);
 #ifdef USE_THREAD
     pthread_mutex_t lck;   ///< Lock to protect variables from race conditions.
 #elif USE_OMP
@@ -80,13 +82,72 @@ inline Disk::Disk(int TheTag, Vec3_t const & TheX, Vec3_t const & TheV, Vec3_t c
     Eta = 1.0;  
     Beta = 0.12; 
     Q    = 1.0,0.0,0.0,0.0;
-
+    Ghost = false;
 #ifdef USE_THREAD
     pthread_mutex_init(&lck,NULL);
 #elif USE_OMP
     omp_init_lock(&lck);
 #endif
 }
+
+inline void Disk::Periodic(int modexy, Vec3_t &Box)
+{
+    //modexy is to distingusih perodic in xy direction, Box is where the periodic boundary was
+    if(IsFree())
+    {
+        double dist1 = std::fabs(X(modexy) - Box(0));
+        double dist2 = std::fabs(X(modexy) - Box(1));
+        if(dist1<dist2)
+        {
+            if(dist1<2*R)
+            {
+                Ghost = true;
+                double distb = std::fabs(Xb(modexy)-Box(0));
+                X(modexy) = Box(1) + dist1;
+                Xb(modexy) = Box(1) + distb;
+            }
+            
+        }else{
+            if(dist2<2*R)
+            {
+                Ghost = true;
+                double distb = std::fabs(Xb(modexy)-Box(1));
+                X(modexy) = Box(0) - dist2;
+                Xb(modexy) = Box(0) - distb;
+            }
+            
+        }
+    }
+    
+      
+}
+
+inline void Disk::Leave(int modexy, Vec3_t &Box)
+{
+    if(IsFree())
+    {
+        if(X(modexy)<Box(0))
+        {
+            double dist = std::fabs(X(modexy)-Box(0));
+            X(modexy) = Box(1)-dist;
+        
+            double distb = Xb(modexy)-Box(0);
+            Xb(modexy) = Box(1)-distb;
+        
+        }
+        if(X(modexy)>Box(1))
+        {
+            double dist = std::fabs(X(modexy)-Box(1));
+            X(modexy) = Box(0)+dist;
+
+            double distb = Xb(modexy)-Box(1);
+            Xb(modexy) = Box(0)+distb;
+        }
+    }
+    
+
+}
+
 
 inline void Disk::Translate(double dt)
 {

@@ -156,6 +156,38 @@ inline void Domain::UpdateParticlesContacts()
             }
         }
     }
+    #pragma omp parallel for schedule(static) num_threads(Nproc)
+    for(int ip=0; ip<GhostParticles.size(); ++ip)
+    {
+        DEM::Disk *Pa = &GhostParticles[ip];
+        if(!Pa->Ghost) continue;
+        int ixs = std::max(std::floor(Pa->X(0) - Pa->R - 3*dx),0.0);
+        int ixe = std::min(std::ceil(Pa->X(0) + Pa->R + 3*dx),(double) nx);
+        int iys = std::max(std::floor(Pa->X(1) - Pa->R - 3*dx),0.0);
+        int iye = std::min(std::ceil(Pa->X(1) + Pa->R + 3*dx),(double) ny);
+        for(int ix=ixs; ix<ixe; ++ix)
+        for(int iy=iys; iy<iye; ++iy) 
+        {
+            double x = (double) ix;
+            double y = (double) iy;
+            Vec3_t CC(x,y,0);
+            double len = DEM::DiskSquare(Pa->X,CC,Pa->R,dx);
+            if (std::fabs(len)<1.0e-12) continue;
+            if(Check[ix][iy][0]<0)
+            {
+                Check[ix][iy][0] = ip;
+            }else{
+                // std::cout<<"Collide!!!!!"<<std::endl;
+                int ip1 = std::min(Check[ix][iy][0],ip);
+                int ip2 = std::max(Check[ix][iy][0],ip);
+                if(std::fabs(ip2-ip1)<1e-6) continue;
+                std::pair<int,int> temp(ip1,ip2);
+                myset_private[omp_get_thread_num()].insert(temp);
+                
+            }
+        }
+    }
+
     std::set<std::pair<int,int>>::iterator it;
     for(size_t i=0; i<Nproc; ++i)
     {
@@ -173,84 +205,119 @@ inline void Domain::UpdateParticlesContacts()
     }
 }
 
-inline void Domain::AddDisksG()
+
+inline void Domain::adddiskG_sub(DEM::Disk *Pa)
 {
-    if(Time<0.5) std::cout<<"--- "<<"PSM"<<" ---"<<std::endl;    
     size_t nx = Ndim(0);
     size_t ny = Ndim(1);
     size_t nz = Ndim(2);
+    int ixs = std::max(std::floor(Pa->X(0) - Pa->Rh - 3*dx),0.0);
+    int ixe = std::min(std::ceil(Pa->X(0) + Pa->Rh + 3*dx),(double) nx);
+    int iys = std::max(std::floor(Pa->X(1) - Pa->Rh - 3*dx),0.0);
+    int iye = std::min(std::ceil(Pa->X(1) + Pa->Rh + 3*dx),(double) ny);
+    // std::cout<<ixs<<" "<<ixe<<" "<<iys<<" "<<iye<<std::endl; 
+    for(int ix=ixs; ix<ixe; ++ix)
+    for(int iy=iys; iy<iye; ++iy) 
+    {
+        // std::cout<<ix<<" "<<iy<<std::endl;
+        double x = (double) ix;
+        double y = (double) iy;
+        Vec3_t CC(x,y,0);
+        double len = DEM::DiskSquare(Pa->X,CC,Pa->Rh,dx);
+        if (std::fabs(len)<1.0e-12) continue;
+        double gamma  = len/(4.0*dx);
+        // std::cout<<ix<<" "<<iy<<" "<<iz<<" "<<gamma<<std::endl;
+                
+        Gamma[ix][iy][0] = std::min(gamma+Gamma[ix][iy][0],1.0);
+        
+        //cell->Gamma   = std::max(gamma,cell->Gamma);
+        //cell->Gamma   = std::min(gamma+cell->Gamma,1.0);
+        //if (fabs(cell->Gamma-1.0)<1.0e-12)
+        //if (fabs(cell->Gamma-1.0)<1.0e-12&&(fabs(Lat[0].G)>1.0e-12||Gmix>1.0e-12)) 
+        
+        Vec3_t B      = CC - Pa->X;
+        Vec3_t tmp;
+        Rotation(Pa->W,Pa->Q,tmp);
+        Vec3_t VelPt   = Pa->V + cross(tmp,B);
+        VelP[ix][iy][0] = VelPt;
+        double rho = Rho[ix][iy][0];
+        double Bn  = (gamma*(Tau-0.5))/((1.0-gamma)+(Tau-0.5));
+        //double Bn  = gamma;
+        //double Bn  = floor(gamma);
+        
+        Vec3_t Flbmt(0.0,0.0,0.0);
+        // double *FF = F[ix][iy][iz];
+        
+        for (size_t k=0;k<Nneigh;k++)
+        {
+            double Fvpp     = Feq(Op[k],rho,VelPt);
+            double Fvp      = Feq(k    ,rho,VelPt);
+            double Omega    = F[ix][iy][0][Op[k]] - Fvpp - (F[ix][iy][0][k] - Fvp);
+            //cell->Omeis[k] += Omega;
+            //cell->Omeis[k] += gamma*Omega;
+            // cell->Omeis[k] = Omega;
+            Omeis[ix][iy][0][k] = Omega;
+            Flbmt += -Bn*Omega*C[k];
+        }
+        
+        Flbm[ix][iy][0] = Flbmt;
+        Vec3_t T,Tt;
+        Tt =           cross(B,Flbmt);
+        Quaternion_t q;
+        Conjugate    (Pa->Q,q);
+        Rotation     (Tt,q,T);
+            //std::cout << "1" << std::endl;
+    #ifdef USE_OMP
+        omp_set_lock      (&Pa->lck);
+    #endif
+        Pa->F          += Flbmt;
+        Pa->T          += T;
+    #ifdef USE_OMP
+        omp_unset_lock    (&Pa->lck);
+    #endif
+    }
+}
+
+inline void Domain::AddDisksG()
+{
+    if(Time<0.5) std::cout<<"--- "<<"PSM"<<" ---"<<std::endl;    
+    // std::cout<<1<<std::endl;
+    #ifdef USE_OMP
+    #pragma omp parallel for schedule(static) num_threads(Nproc)
+    #endif
+    for(size_t ip=0; ip<Particles.size(); ++ip)
+    {
+        adddiskG_sub(&Particles[ip]);
+        // std::cout<<ip<<std::endl;
+        
+    }
+    // std::cout<<2<<std::endl;
+
+    #ifdef USE_OMP
+    #pragma omp parallel for schedule(static) num_threads(Nproc)
+    #endif
+    for(size_t ip=0; ip<GhostParticles.size(); ++ip)
+    {
+        DEM::Disk *Pa = &GhostParticles[ip];
+        if(!Pa->Ghost) continue;
+        // std::cout<<ip<<std::endl;
+        adddiskG_sub(&GhostParticles[ip]);
+        
+    }
+    // std::cout<<3<<std::endl;
+
+    
     #ifdef USE_OMP
     #pragma omp parallel for schedule(static) num_threads(Nproc)
     #endif
     for(size_t ip=0; ip<Particles.size(); ++ip)
     {
         DEM::Disk *Pa = &Particles[ip];
-        // std::cout<<ip<<std::endl;
-        int ixs = std::max(std::floor(Pa->X(0) - Pa->Rh - 3*dx),0.0);
-        int ixe = std::min(std::ceil(Pa->X(0) + Pa->Rh + 3*dx),(double) nx);
-        int iys = std::max(std::floor(Pa->X(1) - Pa->Rh - 3*dx),0.0);
-        int iye = std::min(std::ceil(Pa->X(1) + Pa->Rh + 3*dx),(double) ny);
-        for(size_t ix=ixs; ix<ixe; ++ix)
-        for(size_t iy=iys; iy<iye; ++iy) 
-        {
-            double x = (double) ix;
-            double y = (double) iy;
-            Vec3_t CC(x,y,0);
-            double len = DEM::DiskSquare(Pa->X,CC,Pa->Rh,dx);
-            if (std::fabs(len)<1.0e-12) continue;
-            double gamma  = len/(4.0*dx);
-            // std::cout<<ix<<" "<<iy<<" "<<iz<<" "<<gamma<<std::endl;
-                    
-            Gamma[ix][iy][0] = std::min(gamma+Gamma[ix][iy][0],1.0);
-            
-            //cell->Gamma   = std::max(gamma,cell->Gamma);
-            //cell->Gamma   = std::min(gamma+cell->Gamma,1.0);
-            //if (fabs(cell->Gamma-1.0)<1.0e-12)
-            //if (fabs(cell->Gamma-1.0)<1.0e-12&&(fabs(Lat[0].G)>1.0e-12||Gmix>1.0e-12)) 
-            
-            Vec3_t B      = CC - Pa->X;
-            Vec3_t tmp;
-            Rotation(Pa->W,Pa->Q,tmp);
-            Vec3_t VelPt   = Pa->V + cross(tmp,B);
-            VelP[ix][iy][0] = VelPt;
-            double rho = Rho[ix][iy][0];
-            double Bn  = (gamma*(Tau-0.5))/((1.0-gamma)+(Tau-0.5));
-            //double Bn  = gamma;
-            //double Bn  = floor(gamma);
-            
-            Vec3_t Flbmt(0.0,0.0,0.0);
-            // double *FF = F[ix][iy][iz];
-            
-            for (size_t k=0;k<Nneigh;k++)
-            {
-                double Fvpp     = Feq(Op[k],rho,VelPt);
-                double Fvp      = Feq(k    ,rho,VelPt);
-                double Omega    = F[ix][iy][0][Op[k]] - Fvpp - (F[ix][iy][0][k] - Fvp);
-                //cell->Omeis[k] += Omega;
-                //cell->Omeis[k] += gamma*Omega;
-                // cell->Omeis[k] = Omega;
-                Omeis[ix][iy][0][k] = Omega;
-                Flbmt += -Bn*Omega*C[k];
-            }
-            
-            Flbm[ix][iy][0] = Flbmt;
-            Vec3_t T,Tt;
-            Tt =           cross(B,Flbmt);
-            Quaternion_t q;
-            Conjugate    (Pa->Q,q);
-            Rotation     (Tt,q,T);
-                //std::cout << "1" << std::endl;
-        #ifdef USE_OMP
-            omp_set_lock      (&Pa->lck);
-        #endif
-            Pa->F          += Flbmt;
-            Pa->T          += T;
-        #ifdef USE_OMP
-            omp_unset_lock    (&Pa->lck);
-        #endif
-        }
+        DEM::Disk *Pa_ghost = &GhostParticles[ip];
+        if(!Pa_ghost->Ghost) continue;
+        Pa->F += Pa_ghost->F;
+        Pa->T += Pa_ghost->T;
     }
-    
     
 }
 
