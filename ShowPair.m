@@ -5,27 +5,31 @@ middle = 'test_periodic_';
 for i = 10:10
 name = strcat(prefix,middle,num2str(i,'%04d'),'.h5');
 pos = h5read(name,'/Pposition');
+nx = h5read(name,'/Nx');
+ny = h5read(name,'/Ny');
 Np = 5;
 ii = 1:Np*2;
 Pos = [pos(3*(ii-1)+1),pos(3*(ii-1)+2),pos(3*(ii-1)+3)];
 ptag = h5read(name,'/PTag');
-% plist = h5read(name,'/PList');
+pplist = h5read(name,'/PListPP');
+pglist = h5read(name,'/PListPG');
 num = 0;
 color = {'r','g'};
 subplot(121)
 for j=1:Np*2
     if(ptag(j)>0)
-        viscircles(Pos(j,1:2),20,'color',char(color(ceil(j/100))));
+        viscircles(Pos(j,1:2),20,'color',char(color(ceil(j/Np))));
         hold on
         plot(Pos(j,1),Pos(j,2),'b.')
-        if(j<=100)
+        if(j<=Np)
             text(Pos(j,1),Pos(j,2),num2str(j-1));
         else
-            text(Pos(j,1),Pos(j,2),num2str(j-1-100));
+            text(Pos(j,1),Pos(j,2),num2str(j-1-Np));
         end
         num = num +1;
     end
 end
+axis equal
 for j=1:2:numel(plist)-1
     k = [plist(j),plist(j+1)]+1;
     
