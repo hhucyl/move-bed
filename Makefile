@@ -166,6 +166,19 @@ test_circle2/fast:
 .PHONY : test_circle2/fast
 
 #=============================================================================
+# Target rules for targets named test_mvbed
+
+# Build rule for target.
+test_mvbed: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 test_mvbed
+.PHONY : test_mvbed
+
+# fast build rule for target.
+test_mvbed/fast:
+	$(MAKE) -f CMakeFiles/test_mvbed.dir/build.make CMakeFiles/test_mvbed.dir/build
+.PHONY : test_mvbed/fast
+
+#=============================================================================
 # Target rules for targets named test_collision
 
 # Build rule for target.
@@ -286,6 +299,33 @@ test_collision.cpp.s:
 	$(MAKE) -f CMakeFiles/test_collision.dir/build.make CMakeFiles/test_collision.dir/test_collision.cpp.s
 .PHONY : test_collision.cpp.s
 
+test_mvbed.o: test_mvbed.cpp.o
+
+.PHONY : test_mvbed.o
+
+# target to build an object file
+test_mvbed.cpp.o:
+	$(MAKE) -f CMakeFiles/test_mvbed.dir/build.make CMakeFiles/test_mvbed.dir/test_mvbed.cpp.o
+.PHONY : test_mvbed.cpp.o
+
+test_mvbed.i: test_mvbed.cpp.i
+
+.PHONY : test_mvbed.i
+
+# target to preprocess a source file
+test_mvbed.cpp.i:
+	$(MAKE) -f CMakeFiles/test_mvbed.dir/build.make CMakeFiles/test_mvbed.dir/test_mvbed.cpp.i
+.PHONY : test_mvbed.cpp.i
+
+test_mvbed.s: test_mvbed.cpp.s
+
+.PHONY : test_mvbed.s
+
+# target to generate assembly for a file
+test_mvbed.cpp.s:
+	$(MAKE) -f CMakeFiles/test_mvbed.dir/build.make CMakeFiles/test_mvbed.dir/test_mvbed.cpp.s
+.PHONY : test_mvbed.cpp.s
+
 test_periodic.o: test_periodic.cpp.o
 
 .PHONY : test_periodic.o
@@ -325,6 +365,7 @@ help:
 	@echo "... edit_cache"
 	@echo "... test_circle_spin"
 	@echo "... test_circle2"
+	@echo "... test_mvbed"
 	@echo "... test_collision"
 	@echo "... test_circle2.o"
 	@echo "... test_circle2.i"
@@ -338,6 +379,9 @@ help:
 	@echo "... test_collision.o"
 	@echo "... test_collision.i"
 	@echo "... test_collision.s"
+	@echo "... test_mvbed.o"
+	@echo "... test_mvbed.i"
+	@echo "... test_mvbed.s"
 	@echo "... test_periodic.o"
 	@echo "... test_periodic.i"
 	@echo "... test_periodic.s"

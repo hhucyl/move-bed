@@ -104,7 +104,7 @@ mechsys/dem/special_functions.h
 
 /home/pzhang/chen/move-bed/./lbm/Stream.h
 
-/home/pzhang/chen/move-bed/test_periodic.cpp
+/home/pzhang/chen/move-bed/test_mvbed.cpp
 ./lbm/Domain.h
 /home/pzhang/chen/move-bed/./lbm/Domain.h
 

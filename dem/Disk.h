@@ -37,8 +37,12 @@ public:
     Vec3_t W;              ///< angular velocity
     Vec3_t Wb;             ///< angular velocity
     Vec3_t F;              ///< Force
+    Vec3_t Fh;             ///< Force From hydraulics
+    Vec3_t Fc;             ///< Force From collision
     Vec3_t Ff;             ///< fixed Force
     Vec3_t T;              ///< Torque
+    Vec3_t Th;             ///< Torque from hydraulics
+    Vec3_t Tc;             ///< Torque from collision
     Vec3_t Tf;             ///< fixed Torque
     Quaternion_t Q;        ///< The quaternion representing the rotation
     double R;              ///< Disk radius
@@ -69,6 +73,8 @@ inline Disk::Disk(int TheTag, Vec3_t const & TheX, Vec3_t const & TheV, Vec3_t c
     Xb  = X - dt*V;
     Wb  = W;
     F   = 0.0,0.0,0.0;
+    Fh   = 0.0,0.0,0.0;
+    Fc   = 0.0,0.0,0.0;
     T   = 0.0,0.0,0.0;
     Ff  = 0.0,0.0,0.0;
     Tf  = 0.0,0.0,0.0;
@@ -93,31 +99,30 @@ inline Disk::Disk(int TheTag, Vec3_t const & TheX, Vec3_t const & TheV, Vec3_t c
 inline void Disk::Periodic(int modexy, Vec3_t &Box)
 {
     //modexy is to distingusih perodic in xy direction, Box is where the periodic boundary was
-    if(IsFree())
+
+        
+    double dist1 = std::fabs(X(modexy) - Box(0));
+    double dist2 = std::fabs(X(modexy) - Box(1));
+    if(dist1<dist2)
     {
-        double dist1 = std::fabs(X(modexy) - Box(0));
-        double dist2 = std::fabs(X(modexy) - Box(1));
-        if(dist1<dist2)
+        if(dist1<2*R)
         {
-            if(dist1<2*R)
-            {
-                Ghost = true;
-                double distb = std::fabs(Xb(modexy)-Box(0));
-                X(modexy) = Box(1) + dist1;
-                Xb(modexy) = Box(1) + distb;
-            }
-            
-        }else{
-            if(dist2<2*R)
-            {
-                Ghost = true;
-                double distb = std::fabs(Xb(modexy)-Box(1));
-                X(modexy) = Box(0) - dist2;
-                Xb(modexy) = Box(0) - distb;
-            }
-            
+            Ghost = true;
+            double distb = std::fabs(Xb(modexy)-Box(0));
+            X(modexy) = Box(1) + dist1;
+            Xb(modexy) = Box(1) + distb;
         }
-    }
+        
+    }else{
+        if(dist2<2*R)
+        {
+            Ghost = true;
+            double distb = std::fabs(Xb(modexy)-Box(1));
+            X(modexy) = Box(0) - dist2;
+            Xb(modexy) = Box(0) - distb;
+        }
+        
+}
     
       
 }
@@ -152,6 +157,7 @@ inline void Disk::Leave(int modexy, Vec3_t &Box)
 inline void Disk::Translate(double dt)
 {
     //std::cout << F(0) << " " << M << " " << V(0) << std::endl;
+    F = Fh+Fc+Ff;
     Vec3_t Ft = F;
     if (vf(0)) Ft(0) = 0.0;
     if (vf(1)) Ft(1) = 0.0;
@@ -175,7 +181,7 @@ inline void Disk::Rotate (double dt)
     q1 = 0.5*Q(1);
     q2 = 0.5*Q(2);
     q3 = 0.5*Q(3);
-
+    T = Th+Tc+Tf;
     Vec3_t Tt = T;
     if (wf(0)) Tt(0) = 0.0;
     if (wf(1)) Tt(1) = 0.0;

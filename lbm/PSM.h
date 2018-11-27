@@ -119,91 +119,6 @@ inline void Domain::AddDiskG(Vec3_t &pos, double R)
     
 }
 
-inline void Domain::UpdateParticlesContacts()
-{
-    size_t nx = Ndim(0);
-    size_t ny = Ndim(1);
-    size_t nz = Ndim(2);
-    ListofContacts.clear();
-    std::set<std::pair<int,int>> myset;
-    std::set<std::pair<int,int>>* myset_private = new std::set<std::pair<int,int>>[Nproc];
-    #pragma omp parallel for schedule(static) num_threads(Nproc)
-    for(int ip=0; ip<Particles.size(); ++ip)
-    {
-        DEM::Disk *Pa = &Particles[ip];
-        int ixs = std::max(std::floor(Pa->X(0) - Pa->R - 3*dx),0.0);
-        int ixe = std::min(std::ceil(Pa->X(0) + Pa->R + 3*dx),(double) nx);
-        int iys = std::max(std::floor(Pa->X(1) - Pa->R - 3*dx),0.0);
-        int iye = std::min(std::ceil(Pa->X(1) + Pa->R + 3*dx),(double) ny);
-        for(int ix=ixs; ix<ixe; ++ix)
-        for(int iy=iys; iy<iye; ++iy) 
-        {
-            double x = (double) ix;
-            double y = (double) iy;
-            Vec3_t CC(x,y,0);
-            double len = DEM::DiskSquare(Pa->X,CC,Pa->R,dx);
-            if (std::fabs(len)<1.0e-12) continue;
-            if(Check[ix][iy][0]<0)
-            {
-                Check[ix][iy][0] = ip;
-            }else{
-                // std::cout<<"Collide!!!!!"<<std::endl;
-                int ip1 = std::min(Check[ix][iy][0],ip);
-                int ip2 = std::max(Check[ix][iy][0],ip);
-                std::pair<int,int> temp(ip1,ip2);
-                myset_private[omp_get_thread_num()].insert(temp);
-                
-            }
-        }
-    }
-    #pragma omp parallel for schedule(static) num_threads(Nproc)
-    for(int ip=0; ip<GhostParticles.size(); ++ip)
-    {
-        DEM::Disk *Pa = &GhostParticles[ip];
-        if(!Pa->Ghost) continue;
-        int ixs = std::max(std::floor(Pa->X(0) - Pa->R - 3*dx),0.0);
-        int ixe = std::min(std::ceil(Pa->X(0) + Pa->R + 3*dx),(double) nx);
-        int iys = std::max(std::floor(Pa->X(1) - Pa->R - 3*dx),0.0);
-        int iye = std::min(std::ceil(Pa->X(1) + Pa->R + 3*dx),(double) ny);
-        for(int ix=ixs; ix<ixe; ++ix)
-        for(int iy=iys; iy<iye; ++iy) 
-        {
-            double x = (double) ix;
-            double y = (double) iy;
-            Vec3_t CC(x,y,0);
-            double len = DEM::DiskSquare(Pa->X,CC,Pa->R,dx);
-            if (std::fabs(len)<1.0e-12) continue;
-            if(Check[ix][iy][0]<0)
-            {
-                Check[ix][iy][0] = ip;
-            }else{
-                // std::cout<<"Collide!!!!!"<<std::endl;
-                int ip1 = std::min(Check[ix][iy][0],ip);
-                int ip2 = std::max(Check[ix][iy][0],ip);
-                if(std::fabs(ip2-ip1)<1e-6) continue;
-                std::pair<int,int> temp(ip1,ip2);
-                myset_private[omp_get_thread_num()].insert(temp);
-                
-            }
-        }
-    }
-
-    std::set<std::pair<int,int>>::iterator it;
-    for(size_t i=0; i<Nproc; ++i)
-    {
-        //std::set_union(myset_private[i].begin(),myset_private[i].end(),myset.begin(),myset.end(),std::insert_iterator<std::set<std::pair<int,int>>>(myset,myset.begin()));
-        for(it=myset_private[i].begin();it!=myset_private[i].end();++it)
-        {
-           myset.insert(*it);
-        }    
-    }
-    
-    for(it=myset.begin();it!=myset.end();++it)
-    {
-        std::pair<int,int> temp((*it).first,(*it).second);
-        ListofContacts.push_back(temp);    
-    }
-}
 
 
 inline void Domain::adddiskG_sub(DEM::Disk *Pa)
@@ -270,8 +185,8 @@ inline void Domain::adddiskG_sub(DEM::Disk *Pa)
     #ifdef USE_OMP
         omp_set_lock      (&Pa->lck);
     #endif
-        Pa->F          += Flbmt;
-        Pa->T          += T;
+        Pa->Fh          += Flbmt;
+        Pa->Th          += T;
     #ifdef USE_OMP
         omp_unset_lock    (&Pa->lck);
     #endif
@@ -315,8 +230,8 @@ inline void Domain::AddDisksG()
         DEM::Disk *Pa = &Particles[ip];
         DEM::Disk *Pa_ghost = &GhostParticles[ip];
         if(!Pa_ghost->Ghost) continue;
-        Pa->F += Pa_ghost->F;
-        Pa->T += Pa_ghost->T;
+        Pa->Fh += Pa_ghost->Fh;
+        Pa->Th += Pa_ghost->Th;
     }
     
 }

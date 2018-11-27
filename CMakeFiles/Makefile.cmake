@@ -72,5 +72,6 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/test_circle_move.dir/DependInfo.cmake"
   "CMakeFiles/test_circle_spin.dir/DependInfo.cmake"
   "CMakeFiles/test_circle2.dir/DependInfo.cmake"
+  "CMakeFiles/test_mvbed.dir/DependInfo.cmake"
   "CMakeFiles/test_collision.dir/DependInfo.cmake"
   )

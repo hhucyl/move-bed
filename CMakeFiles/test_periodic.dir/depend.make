@@ -6,6 +6,7 @@ CMakeFiles/test_periodic.dir/test_periodic.cpp.o: ./dem/Interaction.h
 CMakeFiles/test_periodic.dir/test_periodic.cpp.o: ./lbm/ApplySolidBoundary.h
 CMakeFiles/test_periodic.dir/test_periodic.cpp.o: ./lbm/CalcProps.h
 CMakeFiles/test_periodic.dir/test_periodic.cpp.o: ./lbm/Collide.h
+CMakeFiles/test_periodic.dir/test_periodic.cpp.o: ./lbm/CoupleDEM.h
 CMakeFiles/test_periodic.dir/test_periodic.cpp.o: ./lbm/Domain.h
 CMakeFiles/test_periodic.dir/test_periodic.cpp.o: ./lbm/Feq.h
 CMakeFiles/test_periodic.dir/test_periodic.cpp.o: ./lbm/IBB.h

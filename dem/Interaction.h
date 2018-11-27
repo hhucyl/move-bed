@@ -50,6 +50,7 @@ public:
     double     Mu;       ///< Friction coefficient
     double     Beta;     ///< Rolling stiffness coeffcient
     double     Eta;      ///< Plastic moment coefficient
+    double     delta;
     Vec3_t    SFr;       ///< Vector of static friction
     Vec3_t    Fdr;       ///< Vector of rolling resistance
     Vec3_t     F1;       ///< net force over particle 1
@@ -92,13 +93,13 @@ void DiskPair::CalcForce(double dt)
     T1      = OrthoSys::O;
     T2      = OrthoSys::O;
     double dist  = norm(P2->X - P1->X);
-    double delta = P1->R + P2->R - dist;
+    delta = P1->R + P2->R - dist;
     if (delta>0)
     {
         //Force
         Vec3_t n    = (P2->X - P1->X)/dist;
         Vec3_t x    = P1->X+n*((P1->R*P1->R-P2->R*P2->R+dist*dist)/(2*dist));
-        Vec3_t Fn   = Kn*delta*n;
+        Vec3_t Fn   = Kn*std::pow(delta,1.5)*n;
         Vec3_t t1,t2,x1,x2;
         Rotation(P1->W,P1->Q,t1);
         Rotation(P2->W,P2->Q,t2);

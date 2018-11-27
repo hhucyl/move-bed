@@ -99,18 +99,23 @@ void Domain::WriteXDMF(char const * FileKey)
         double *PVeloc = NULL;
         double *PW = NULL;
         int *Ptag = NULL;
-        int NP = Particles.size();
-
+        int *PlistPP = NULL;
+        int *PlistPG = NULL;
+        int NP = Particles.size()*2;
+        int NL = ListofContactsPP.size()*2;
+        int NLG = ListofContactsPG.size()*2;
         if(Particles.size()>0)
         {
             Pposition = new double[3*NP];
             PVeloc = new double[3*NP];
             PW = new double[3*NP];
             Ptag = new int[NP];
+            PlistPP = new int[NL];
+            PlistPG = new int[NLG];
             for(size_t ip=0; ip<Particles.size();++ip)
             {
                 DEM::Disk *Pa = &Particles[ip];
-                Ptag[ip] = Pa->Tag;
+                Ptag[ip] = 1;
                 Pposition[3*ip] = Pa->X(0);
                 Pposition[3*ip+1] = Pa->X(1);
                 Pposition[3*ip+2] = Pa->X(2);
@@ -120,6 +125,32 @@ void Domain::WriteXDMF(char const * FileKey)
                 PW[3*ip] = Pa->W(0);
                 PW[3*ip+1] = Pa->W(1);
                 PW[3*ip+2] = Pa->W(2);
+            }
+            int GN = Particles.size();
+            for(int ip=0; ip<GhostParticles.size();++ip)
+            {
+                DEM::Disk *Pa = &GhostParticles[ip];
+                int ipp = ip+GN;
+                Ptag[ipp] = Pa->Ghost ? 1.0 : -1.0;
+                Pposition[3*ipp] = Pa->X(0);
+                Pposition[3*ipp+1] = Pa->X(1);
+                Pposition[3*ipp+2] = Pa->X(2);
+                PVeloc[3*ipp] = Pa->V(0);
+                PVeloc[3*ipp+1] = Pa->V(1);
+                PVeloc[3*ipp+2] = Pa->V(2);
+                PW[3*ipp] = Pa->W(0);
+                PW[3*ipp+1] = Pa->W(1);
+                PW[3*ipp+2] = Pa->W(2);
+            }
+            for(size_t il=0; il<ListofContactsPP.size(); ++il)
+            {
+                PlistPP[2*il] = ListofContactsPP[il].first;
+                PlistPP[2*il+1] = ListofContactsPP[il].second;
+            }
+            for(size_t il=0; il<ListofContactsPG.size(); ++il)
+            {
+                PlistPG[2*il] = ListofContactsPG[il].first;
+                PlistPG[2*il+1] = ListofContactsPG[il].second;
             }
         }
 
@@ -188,7 +219,14 @@ void Domain::WriteXDMF(char const * FileKey)
             dsname.Printf("PVeloc");        
             H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PVeloc);
             dsname.Printf("PW");        
-            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PW);    
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PW);  
+            dims[0] = NL;
+            dsname.Printf("PListPP");        
+            H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPP);
+            dims[0] = NLG;
+            dsname.Printf("PListPG");        
+            H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPG);    
+           
         }
         
         delete [] Density ;
@@ -207,6 +245,9 @@ void Domain::WriteXDMF(char const * FileKey)
             delete [] Pposition;
             delete [] PVeloc;
             delete [] PW;
+            delete [] PlistPP;
+            delete [] PlistPG;
+
         }
     }
 

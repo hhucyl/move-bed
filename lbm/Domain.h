@@ -177,7 +177,13 @@ public:
     void StartSolve();
     void EndSolve();
     void SetBounceBack();
+    void update_pair_sub(DEM::DiskPair &pair, DEM::Disk* P1, DEM::Disk* P2);
+    void join_contactlist_sub(std::set<std::pair<int,int>> *myset_private, std::vector<std::pair<int,int>> &ListofContacts);
     void UpdateParticlesContacts();
+    void UpdateParticlePairForce();
+    void LeaveAndForcedForce();
+    void GhostPeriodic();
+    void MoveParticles();
     #ifdef USE_OMP
     omp_lock_t      lck;                      ///< to protect variables in multithreading
     #endif
@@ -242,8 +248,12 @@ public:
     // std::vector<LBM::Disk> Particles; ///DEM
     std::vector<DEM::Disk> Particles; ///DEM
     std::vector<DEM::Disk> GhostParticles; ///DEM
-    std::vector<std::pair<int,int>> ListofContacts;
+    std::vector<std::pair<int,int>> ListofContactsPP;
+    std::vector<std::pair<int,int>> ListofContactsPG;
+
     double dtdem;
+    Vec3_t Box;
+    int modexy;
 
     
 };
@@ -283,6 +293,8 @@ inline Domain::Domain(LBMethod TheMethod, CollideMethod TheMethodC,  double Then
     Method = TheMethod;
     MethodC = TheMethodC;
     Nu = nu[0];
+    Box = 0.0, 0.0, 0.0;
+    modexy = -1;
     Tau         = 3.0*nu[0]*dt/(dx*dx)+0.5;
     if (TheMethod==D2Q5)
     {
@@ -482,7 +494,7 @@ inline Domain::Domain(LBMethod TheMethod, CollideMethod TheMethodC,  double Then
 #include "CalcProps.h"
 #include "Initialize.h"
 #include "ApplySolidBoundary.h"
-
+#include "CoupleDEM.h"
 
 
 inline void Domain::SetBounceBack()
