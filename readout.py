@@ -2,7 +2,7 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 name = '/home/pzhang/chen/move-bed/'
-name = name +'periodic.out'
+name = name +'periodic1.out'
 f = open(name)
 p = re.compile(r'\[.*?\]')
 p1 = re.compile(r'-?\d+\.?\d*e?-\d\d')

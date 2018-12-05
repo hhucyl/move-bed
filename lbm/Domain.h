@@ -113,7 +113,7 @@ public:
     typedef void (*ptDFun_t) (Domain & Dom, void * UserData);
     typedef void (LBM::Domain::*ptFM_t)  (double *m, double rho, Vec3_t &vel); 
     typedef void (LBM::Domain::*ptFC_t)  ();
-    typedef void (LBM::Domain::*ptFB_t)  (bool calcf = true);
+    typedef void (LBM::Domain::*ptFB_t)  (bool calcf);
     
    
     
@@ -144,11 +144,11 @@ public:
                            ///< The collide step of LBM with MRT
     void   CollideSRT();                                                           ///< The collide step of LBM for single component simulations
     void   Stream();
-    void   BounceBack(bool calcF = true);
-    void   BounceBackLIBB(bool calcF = true);
-    void   BounceBackQIBB(bool calcF = true);
-    void   BounceBackCLI(bool calcF = true);
-    void   BounceBackMR(bool calcF = true);
+    void   BounceBack(bool calcF);
+    void   BounceBackLIBB(bool calcF);
+    void   BounceBackQIBB(bool calcF);
+    void   BounceBackCLI(bool calcF);
+    void   BounceBackMR(bool calcF);
     void   BoundaryGamma();
     double KernelIBM(double r, double x);
     double KernelIBM1(double r, double x);
@@ -184,6 +184,9 @@ public:
     void LeaveAndForcedForce();
     void GhostPeriodic();
     void MoveParticles();
+    void Initial(double rho, Vec3_t &v0,  Vec3_t &g0);
+
+    void Solve(double Tf, double dtout, char const * TheFileKey, ptDFun_t ptSetup, ptDFun_t ptReport);
     #ifdef USE_OMP
     omp_lock_t      lck;                      ///< to protect variables in multithreading
     #endif
@@ -248,8 +251,9 @@ public:
     // std::vector<LBM::Disk> Particles; ///DEM
     std::vector<DEM::Disk> Particles; ///DEM
     std::vector<DEM::Disk> GhostParticles; ///DEM
-    std::vector<std::pair<int,int>> ListofContactsPP;
-    std::vector<std::pair<int,int>> ListofContactsPG;
+    std::vector<std::pair<int,int>> ListofContacts;
+    // std::vector<std::pair<int,int>> ListofContactsPP;
+    // std::vector<std::pair<int,int>> ListofContactsPG;
 
     double dtdem;
     Vec3_t Box;
@@ -495,6 +499,7 @@ inline Domain::Domain(LBMethod TheMethod, CollideMethod TheMethodC,  double Then
 #include "Initialize.h"
 #include "ApplySolidBoundary.h"
 #include "CoupleDEM.h"
+#include "solve.h"
 
 
 inline void Domain::SetBounceBack()

@@ -15,12 +15,12 @@ void Report(LBM::Domain &dom, void *UD)
     myUserData &dat = (*static_cast<myUserData *> (UD));
     size_t nx = dom.Ndim(0);
     size_t ny = dom.Ndim(1);
-    size_t nz = dom.Ndim(2);
-    double dx = dom.dx;
+    // size_t nz = dom.Ndim(2);
+    // double dx = dom.dx;
     if(dom.Time <1e-6)
     {
         String fs;
-        fs.Printf("%s.out","periodic");
+        fs.Printf("%s.out","periodic1");
         // fs.Printf("%s_%d_%d_%g.out","Permeability",dat.bbtype,nx,dom.Tau);
         
         dat.oss_ss.open(fs.CStr(),std::ios::out);
@@ -31,33 +31,12 @@ void Report(LBM::Domain &dom, void *UD)
         for(size_t ix=0; ix<nx; ix++)
         for(size_t iy=0; iy<ny; iy++)
         {
-            F+=dom.Flbm[ix][iy][0](1);
+            F+=dom.Flbm[ix][iy][0](0);
         }
         
-        // dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<F<<Util::_8s<<dom.Particles[0].F(1)-dom.Particles[0].Ff(1) <<Util::_8s<<dom.Particles[0].X(1)<<Util::_8s<<dom.Particles[0].F<<Util::_8s<<dom.ListofContacts.size()<<dom.GhostParticles[0].Ghost<<std::endl;
+        dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<dom.Particles[0].F(0)-dom.Particles[0].Ff(0) <<Util::_8s<<dom.Particles[0].X(0)<<Util::_8s<<dom.Particles[0].F<<Util::_8s<<dom.ListofContacts.size()<<dom.GhostParticles[0].Ghost<<std::endl;
         
     }
-}
-
-void Initial(LBM::Domain &dom, double rho, Vec3_t &v0,  Vec3_t &g0)
-{
-    
-    for(size_t ix=0; ix<dom.Ndim(0); ix++)
-    for(size_t iy=0; iy<dom.Ndim(1); iy++)
-    for(size_t iz=0; iz<dom.Ndim(2); iz++)
-    {
-        dom.Rho[ix][iy][iz] = rho;
-        dom.Vel[ix][iy][iz] = 0.0, 0.0, 0.0;
-        dom.BForce[ix][iy][iz] = g0;
-        for(size_t k=0; k<dom.Nneigh; ++k)
-        {
-            dom.F[ix][iy][iz][k] = dom.Feq(k,rho,v0);            
-            dom.Ftemp[ix][iy][iz][k] = dom.Feq(k,rho,v0);            
-        }
-    // std::cout<<dom.F[ix][iy][iz][18]<<std::endl;
-        
-    }
-    dom.Rho0 = rho;//very important
 }
 
 
@@ -67,11 +46,11 @@ int main (int argc, char **argv) try
     
     
     size_t Nproc = 8;
-    size_t h = 200;
+    size_t h = 400;
     double nu = 0.01;
     if(argc>=2) Nproc = atoi(argv[1]); 
 
-    size_t nx = h+5;
+    size_t nx = h;
     size_t ny = h;
     size_t nz = 1;
     double dx = 1.0;
@@ -84,7 +63,7 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.g = 2e-5;
+    my_dat.g = 2e-7;
     my_dat.R = R;
     Vec3_t g0(0.0,0.0,0.0);
     dom.Nproc = Nproc;       
@@ -98,29 +77,22 @@ int main (int argc, char **argv) try
     double rhos = 2.0;
     my_dat.rhos = rhos;
     Vec3_t v0(0.0,0.0,0.0);
-    Initial(dom,rho,v0,g0);
+    dom.Initial(rho,v0,g0);
     
-    Vec3_t pos(R+1,0.5*ny,0.0);
+    Vec3_t pos(nx-1-1,ny/2,0.0);
     // Vec3_t pos(nx*0.5,ny-1-3.0*R,0.0);
     // Vec3_t pos1(nx*0.5,2.5*R,0.0);
-    Vec3_t dxp(2*R+1,0.0,0.0);
+    Vec3_t dxp(2*R,0.0,0.0);
     Vec3_t v(0.0,0.0,0.0);
     Vec3_t v1(0.0,0.0,0.0);
     Vec3_t w(0.0,0.0,0.0);
     //DEM
-    for(size_t ip=0; ip<5; ++ip)
-    {
-        // std::cout<<pos<<std::endl;
-    // dom.Particles.push_back(DEM::Disk(-1, pos, v, w, rhos, R, dt));
-    // dom.Particles.push_back(DEM::Disk(-2, pos1, v1, w, rhos, R, dt));
-    // dom.Particles[1].FixVeloc();
-        dom.Particles.push_back(DEM::Disk(-ip, pos, v, w, rhos, R, dt));
-        pos = pos+dxp;
-        // pos1 = pos1+dxp;
-    }
+    dom.dtdem = 0.1*dt;
+    dom.Particles.push_back(DEM::Disk(-1, pos, v, w, rhos, R, dom.dtdem));
+    
 
     std::cout<<"Particles number = "<<dom.Particles.size()<<std::endl;
-    for(int ip=0; ip<dom.Particles.size(); ++ip)
+    for(size_t ip=0; ip<dom.Particles.size(); ++ip)
     {
         dom.Particles[ip].Ff = M_PI*R*R*rhos*my_dat.g, 0.0 , 0.0;
         dom.Particles[ip].Kn = 100;
@@ -145,16 +117,14 @@ int main (int argc, char **argv) try
     // }
 
 
-    double Tf = 3500;
+    double Tf = 2;
     
-    double dtout = 10;
-    char const * TheFileKey = "test_periodic";
-    dom.Box = 0.0, nx-1, 0.0;
+    double dtout = 1;
+    dom.Box = 0.0, (double) ny-1, 0.0;
     dom.modexy = 0;
-    dom.dtdem = dt;
-    //solving
-    dom.Solve( Tf, dtout, "test_periodic1", NULL, Report);    
     
+    //solving
+    dom.Solve( Tf, dtout, "test_periodic1", NULL, Report);
     return 0;
 
 }MECHSYS_CATCH

@@ -94,6 +94,7 @@ void DiskPair::CalcForce(double dt)
     T2      = OrthoSys::O;
     double dist  = norm(P2->X - P1->X);
     delta = P1->R + P2->R - dist;
+    if(P1->X(0)<(-10*P1->R)||P2->X(0)<(-10*P2->R)) delta = -1000;//couple with periodic
     if (delta>0)
     {
         //Force

@@ -495,7 +495,7 @@ inline void Domain::CollideMRTIBM()
                 double ForceTerm1 = dt*3.0*W[k]*dot(BForce[ix][iy][iz],C[k]);
                 Vec3_t BFt(0.0, 0.0, 0.0);
                 BFt = 3.0*(C[k] - vel)/(Cs*Cs) + 9.0*dot(C[k],vel)/(Cs*Cs*Cs*Cs)*C[k]; 
-                double ForceTerm = dt*(1 - 1.0/(2.0*Tau))*W[k]*dot(BFt,bf); 
+                double ForceTerm = dt*(1 - 1.0/(2.0*tau))*W[k]*dot(BFt,bf); 
                 Ftemp[ix][iy][iz][k] = F[ix][iy][iz][k] - fneq[k]  + ForceTerm + ForceTerm1;
               
             }

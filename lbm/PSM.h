@@ -68,7 +68,7 @@ inline void Domain::AddDiskG(Vec3_t &pos, double R)
 {
     size_t nx = Ndim(0);
     size_t ny = Ndim(1);
-    size_t nz = Ndim(2);
+    // size_t nz = Ndim(2);
     #ifdef USE_OMP
     #pragma omp parallel for schedule(static) num_threads(Nproc)
     #endif
@@ -125,7 +125,7 @@ inline void Domain::adddiskG_sub(DEM::Disk *Pa)
 {
     size_t nx = Ndim(0);
     size_t ny = Ndim(1);
-    size_t nz = Ndim(2);
+    // size_t nz = Ndim(2);
     int ixs = std::max(std::floor(Pa->X(0) - Pa->Rh - 3*dx),0.0);
     int ixe = std::min(std::ceil(Pa->X(0) + Pa->Rh + 3*dx),(double) nx);
     int iys = std::max(std::floor(Pa->X(1) - Pa->Rh - 3*dx),0.0);
@@ -195,7 +195,7 @@ inline void Domain::adddiskG_sub(DEM::Disk *Pa)
 
 inline void Domain::AddDisksG()
 {
-    if(Time<0.5) std::cout<<"--- "<<"PSM"<<" ---"<<std::endl;    
+    // if(Time<0.5) std::cout<<"--- "<<"PSM"<<" ---"<<std::endl;    
     // std::cout<<1<<std::endl;
     #ifdef USE_OMP
     #pragma omp parallel for schedule(static) num_threads(Nproc)

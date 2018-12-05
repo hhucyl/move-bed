@@ -1,5 +1,5 @@
 #include "./lbm/Domain.h"
-
+#include <time.h>
 
 struct myUserData
 {
@@ -52,23 +52,33 @@ void Initial(LBM::Domain &dom, double rho, Vec3_t &v0,  Vec3_t &g0)
     dom.Rho0 = rho;//very important
 }
 
-
+double random(double a, double b)
+{
+    double rn = std::rand()/((double) RAND_MAX);
+    return (b-a)*rn+a;
+}
   
 int main (int argc, char **argv) try
 {
     
-    
+    std::srand((unsigned)time(NULL));    
     size_t Nproc = 12;
     size_t h = 400;
     double nu = 0.01;
     if(argc>=2) Nproc = atoi(argv[1]); 
 
-    size_t nx = h;
+    size_t nx = h+10;
     size_t ny = 2*h;
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
     double R = 20;
+    double Ga = 2.4;
+    double rho = 1.0;
+    double rhos = 2.0;
+    double gy = Ga*Ga*nu*nu/((8*R*R*R)*(rhos/rho-1));
+    std::cout<<"gy = "<<gy<<std::endl;
+
     std::cout<<"R = "<<R<<std::endl;
     //nu = 1.0/30.0;
     std::cout<<nx<<" "<<ny<<" "<<nz<<std::endl;
@@ -86,36 +96,37 @@ int main (int argc, char **argv) try
     // dom.IsFt = false;
    
     //initial
-    double rho = 1.0;
-    double rhos = 2.0;
+    
     my_dat.rhos = rhos;
     Vec3_t v0(0.0,0.0,0.0);
     Initial(dom,rho,v0,g0);
     
-    Vec3_t pos(R,0.0,0.0);
+    Vec3_t pos(R+1,R,0.0);
     Vec3_t dxp(0.0,0.0,0.0);
     Vec3_t v(0.0,0.0,0.0);
     Vec3_t w(0.0,0.0,0.0);
     //DEM
+    dom.dtdem = 0.1*dt;
     //fixed
     for(size_t ip=0; ip<10; ++ip)
     {
         // std::cout<<pos<<std::endl;
-        dom.Particles.push_back(DEM::Disk(-ip, pos, v, w, rhos, R, dt));
+        dom.Particles.push_back(DEM::Disk(-ip, pos, v, w, rhos, R, dom.dtdem));
         dom.Particles[ip].FixVeloc();
-        dxp = 2.0*R,0.0,0.0;
+        dxp = 2.0*R+1,0.0,0.0;
         pos = pos+dxp;
     }
     //move
     int num = 0;
     for(int ipy=0; ipy<9; ++ipy)
     {
-        pos = R,(2*ipy+2)*R,0.0;
+        pos = R+1,(2*ipy+2)*R+R+1,0.0;
         for(int ipx=0; ipx<10; ++ipx)
         {
-            dom.Particles.push_back(DEM::Disk(-num, pos, v, w, rhos, R, dt));
+            Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1));
+            dom.Particles.push_back(DEM::Disk(-num, pos+dxr, v, w, rhos, R, dom.dtdem));
             // std::cout<<pos(0)<<" "<<pos(1)<<std::endl;
-            dxp = 2.0*R+std::pow(-1,ipx)*0.1,0.0,0.0;
+            dxp = 2.0*R+1,0.0,0.0;
             pos = pos+dxp;
             num++;
         }   
@@ -124,7 +135,7 @@ int main (int argc, char **argv) try
     std::cout<<"Particles number = "<<dom.Particles.size()<<std::endl;
     for(int ip=0; ip<dom.Particles.size(); ++ip)
     {
-        // dom.Particles[ip].Ff = 0.0, -M_PI*R*R*rhos*1e-10, 0.0;
+        dom.Particles[ip].Ff = 0.0, -M_PI*R*R*rhos*gy, 0.0;
         dom.Particles[ip].Kn = 5;
         dom.Particles[ip].Gn = 0.8;
         dom.Particles[ip].Kt = 2.5;
@@ -148,60 +159,13 @@ int main (int argc, char **argv) try
     // }
 
 
-    double Tf = 1e5;
+    double Tf = 1e6;
     
-    double dtout = 1e2;
-    char const * TheFileKey = "test_mvbed";
+    double dtout = 1e3;;
     dom.Box = 0, nx-1, 0;
     dom.modexy = 0;
     //solving
-    dom.StartSolve();
-    std::cout<<"Box "<<dom.Box<<std::endl;
-    std::cout<<"modexy "<<dom.modexy<<std::endl;
-    double tout = 0;
-    dom.dtdem = dt;
-    while(dom.Time<Tf)
-    {
-        if (dom.Time>=tout)
-        {
-            
-            String fn;
-            fn.Printf("%s_%04d", TheFileKey, dom.idx_out);
-            
-            dom.WriteXDMF(fn.CStr());
-            dom.idx_out++;
-            // std::cout<<"--- Time = "<<dom.Time<<" "<<Tf<<" ---"<<std::endl;
-            Report(dom,&my_dat); 
-            tout += dtout;
-        }
-        dom.SetZero();
-        //set added force and check leave particles
-        dom.LeaveAndForcedForce();
-
-        dom.GhostParticles.clear();
-        dom.GhostParticles.assign(dom.Particles.begin(), dom.Particles.end()); 
-        
-        dom.GhostPeriodic();
-        
-         
-        //set fluid force
-        dom.AddDisksG();
-        
-        //collide and streaming
-        (dom.*dom.ptr2collide)();
-        dom.Stream();
-        dom.BounceBack(false);
-        dom.CalcProps();
-
-        //update particles contact
-        dom.UpdateParticlesContacts();
-        dom.UpdateParticlePairForce();
-        
-        //move
-        dom.MoveParticles();
-
-        dom.Time += 1;
-    }
-    dom.EndSolve();
+    dom.Solve( Tf, dtout, "test_mvbed", NULL, NULL);
+    
     return 0;
 }MECHSYS_CATCH

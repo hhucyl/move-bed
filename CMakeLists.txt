@@ -28,6 +28,8 @@ SET(PROGS
     test_circle2
     test_collision
     test_periodic
+    test_periodic1
+    test_periodic2
     test_mvbed
 )
 

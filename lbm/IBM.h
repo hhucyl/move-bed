@@ -38,13 +38,13 @@ inline void Domain::ApplyIBM2D(Vec3_t &pos, double R)
 {
     size_t nx = Ndim(0);
     size_t ny = Ndim(1);
-    size_t nz = Ndim(2);
+    // size_t nz = Ndim(2);
     int N = points.size();
     Vec3_t VelIBM[N];
     #ifdef USE_OMP
     #pragma omp parallel for schedule(static) num_threads(Nproc)
     #endif
-    for(size_t im=0; im<N; im++)
+    for(int im=0; im<N; im++)
     {
         Vec3_t r = points[im];
         int ixs = std::max(std::floor(r(0) - 3*dx),0.0);
@@ -72,7 +72,7 @@ inline void Domain::ApplyIBM2D(Vec3_t &pos, double R)
     for(int iy= iys; iy<iye; iy++)
     {
         Flbm[ix][iy][0] = 0.0,0.0,0.0;
-        for(size_t im=0; im<N; im++)
+        for(int im=0; im<N; im++)
         {
             Vec3_t r = points[im];        
             Vec3_t FIBM = 2.0*Rho[ix][iy][0]*(0.0-VelIBM[im])/dt;
@@ -88,7 +88,7 @@ inline void Domain::GenPts(Vec3_t &pos, double R, int N)
     if(Ndim(2)==1)
     {
         double alpha = 2*M_PI/((double) N);
-        for(size_t im=0; im<N; im++)
+        for(int im=0; im<N; im++)
         {
             Vec3_t r(R*std::cos(im*alpha)+pos(0),R*std::sin(im*alpha)+pos(1),0.0);
             points.push_back(r);
@@ -112,7 +112,7 @@ inline void Domain::ApplyIBM3D(Vec3_t &pos, double R)
     #ifdef USE_OMP
     #pragma omp parallel for schedule(static) num_threads(Nproc)
     #endif
-    for(size_t im=0; im<N; im++)
+    for(int im=0; im<N; im++)
     {
         Vec3_t r = points[im];
         int ixs = std::max(std::floor(r(0) - 3*dx),0.0);
@@ -155,7 +155,7 @@ inline void Domain::ApplyIBM3D(Vec3_t &pos, double R)
     // for(size_t iz=0; iz<nz; ++iz)  
     {
         // Flbm[ix][iy][iz] = 0.0,0.0,0.0;
-        for(size_t im=0; im<N; im++)
+        for(int im=0; im<N; im++)
         {
             Vec3_t r = points[im];
             if(std::fabs(KernelIBM1(r(0),ix)*KernelIBM1(r(1),iy)*KernelIBM1(r(2),iz))<1e-9) continue;       
@@ -178,7 +178,7 @@ inline void Domain::ApplyIBM3D()
     #ifdef USE_OMP
     #pragma omp parallel for schedule(static) num_threads(Nproc)
     #endif
-    for(size_t im=0; im<N; im++)
+    for(int im=0; im<N; im++)
     {
         Vec3_t r = points[im];
         int ixs = std::max(std::floor(r(0) - 3*dx),0.0);
@@ -221,7 +221,7 @@ inline void Domain::ApplyIBM3D()
     // for(size_t iz=0; iz<nz; ++iz)  
     {
         // Flbm[ix][iy][iz] = 0.0,0.0,0.0;
-        for(size_t im=0; im<N; im++)
+        for(int im=0; im<N; im++)
         {
             Vec3_t r = points[im];
             if(std::fabs(KernelIBM1(r(0),ix)*KernelIBM1(r(1),iy)*KernelIBM1(r(2),iz))<1e-9) continue;       
@@ -252,7 +252,7 @@ inline void Domain::ApplyIBM3DIM(Vec3_t &pos, double R, size_t IT)
         #ifdef USE_OMP
         #pragma omp parallel for schedule(static) num_threads(Nproc)
         #endif
-        for(size_t im=0; im<N; im++)
+        for(int im=0; im<N; im++)
         {
             Vec3_t r = points[im];
             int ixs = std::max(std::floor(r(0) - 3*dx),0.0);
@@ -287,7 +287,7 @@ inline void Domain::ApplyIBM3DIM(Vec3_t &pos, double R, size_t IT)
         {
             // Flbm[ix][iy][iz] = 0.0,0.0,0.0;
             Vec3_t Flbmt(0.0,0.0,0.0);
-            for(size_t im=0; im<N; im++)
+            for(int im=0; im<N; im++)
             {
                 Vec3_t r = points[im];
                 if(std::fabs(KernelIBM1(r(0),ix)*KernelIBM1(r(1),iy)*KernelIBM1(r(2),iz))<1e-9) continue;       

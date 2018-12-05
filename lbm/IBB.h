@@ -161,7 +161,7 @@ inline void Domain::AddSphereQ(Vec3_t &pos, double R)
     }
 }
 
-inline void Domain::BounceBack(bool calcF = true)
+inline void Domain::BounceBack(bool calcF)
 {
     if(Time<0.5) std::cout<<"--- "<<"SBB"<<" ---"<<std::endl;
     size_t nx = Ndim(0);
@@ -209,7 +209,7 @@ inline void Domain::BounceBack(bool calcF = true)
     }
 }
 
-inline void Domain::BounceBackLIBB(bool calcF = true)
+inline void Domain::BounceBackLIBB(bool calcF)
 {
                     
     if(Time<0.5) std::cout<<"--- "<<"LIBB"<<" ---"<<std::endl;    
@@ -274,7 +274,7 @@ inline void Domain::BounceBackLIBB(bool calcF = true)
     }   
 }
 
-inline void Domain::BounceBackQIBB(bool calcF = true)
+inline void Domain::BounceBackQIBB(bool calcF)
 {
     if(Time<0.5) std::cout<<"--- "<<"QIBB"<<" ---"<<std::endl;    
     size_t nx = Ndim(0);
@@ -350,7 +350,7 @@ inline void Domain::BounceBackQIBB(bool calcF = true)
     }   
 }
 
-inline void Domain::BounceBackMR(bool calcF = true)
+inline void Domain::BounceBackMR(bool calcF)
 {
     if(Time<0.5) std::cout<<"--- "<<"MR"<<" ---"<<std::endl;    
     size_t nx = Ndim(0);
@@ -384,7 +384,7 @@ inline void Domain::BounceBackMR(bool calcF = true)
             size_t ooiy = (size_t)((int)oiy + (int)C[Op[k]](1) + (int)ny)%ny;
             size_t ooiz = (size_t)((int)oiz + (int)C[Op[k]](2) + (int)nz)%nz;
             double *f = F[ix][iy][iz];
-            double *foo = F[ooix][ooiy][ooiz];
+            // double *foo = F[ooix][ooiy][ooiz];
             double *fo = F[oix][oiy][oiz];
             double *ft = Ftemp[ix][iy][iz];
             double *fto = Ftemp[oix][oiy][oiz];
@@ -405,8 +405,8 @@ inline void Domain::BounceBackMR(bool calcF = true)
             }else{
                 double k1 = (1-2.0*qt-2.0*qt*qt)/((1.0+qt)*(1.0+qt));
                 double k2 = qt*qt/((1.0+qt)*(1.0+qt));
-                double fu = 4.0/((1.0+qt)*(1.0+qt))*W[k]*1.0*3.0*dot(C[Op[k]],VelP[ix][iy][iz]);
-                double FF =  -(t[ix][iy][iz][k]/Nu)*1.0/(4.0*(1+qt)*(1+qt));
+                // double fu = 4.0/((1.0+qt)*(1.0+qt))*W[k]*1.0*3.0*dot(C[Op[k]],VelP[ix][iy][iz]);
+                // double FF =  -(t[ix][iy][iz][k]/Nu)*1.0/(4.0*(1+qt)*(1+qt));
                 // std::cout<<k<<" "<<t[ix][iy][iz][k]<<" "<<FF<<" "<<f[Op[k]]<<std::endl;
                 // double FF =  -t[ix][iy][iz][k]*(4.0/(3.0*Nu*(1+qt)*(1+qt)))*((Tau-0.5)/(1.0/S(k)-0.5));
                 f[Op[k]] = ft[k] + k1*fto[k] + k2*ftoo[k] - k1*ft[Op[k]] - k2*fto[Op[k]] ;
@@ -432,7 +432,7 @@ inline void Domain::BounceBackMR(bool calcF = true)
     }   
 }
 
-inline void Domain::BounceBackCLI(bool calcF = true)
+inline void Domain::BounceBackCLI(bool calcF)
 {
     if(Time<0.5) std::cout<<"--- "<<"CLI"<<" ---"<<std::endl;    
     size_t nx = Ndim(0);
@@ -458,12 +458,12 @@ inline void Domain::BounceBackCLI(bool calcF = true)
         {
             double qt = q[ix][iy][iz][k];
             if(qt<0) continue;
-            double fw[Nneigh];
+            // double fw[Nneigh];
             size_t oix = (size_t)((int)ix + (int)C[Op[k]](0) + (int)nx)%nx;
             size_t oiy = (size_t)((int)iy + (int)C[Op[k]](1) + (int)ny)%ny;
             size_t oiz = (size_t)((int)iz + (int)C[Op[k]](2) + (int)nz)%nz;
             double *f = F[ix][iy][iz];
-            double *fo = F[oix][oiy][oiz];
+            // double *fo = F[oix][oiy][oiz];
             double *ft = Ftemp[ix][iy][iz];
             double *fto = Ftemp[oix][oiy][oiz];
             
@@ -473,7 +473,7 @@ inline void Domain::BounceBackCLI(bool calcF = true)
                 f[Op[k]] = ft[k];
             }else{
                 
-                double fu = 2.0*W[k]*1.0*dot(C[Op[k]],VelP[ix][iy][iz]);
+                // double fu = 2.0*W[k]*1.0*dot(C[Op[k]],VelP[ix][iy][iz]);
                 f[Op[k]] = (1.0-2.0*qt)/(1+2.0*qt)*fto[k] + ft[k] - (1.0-2.0*qt)/(1.0+2.0*qt)*ft[Op[k]];
                 
             }

@@ -97,37 +97,45 @@ void Domain::WriteXDMF(char const * FileKey)
         }
         double *Pposition = NULL;
         double *PVeloc = NULL;
+        double *PForce = NULL;
         double *PW = NULL;
         int *Ptag = NULL;
-        int *PlistPP = NULL;
-        int *PlistPG = NULL;
+        int *Plist = NULL;
+        // int *PlistPP = NULL;
+        // int *PlistPG = NULL;
         int NP = Particles.size()*2;
-        int NL = ListofContactsPP.size()*2;
-        int NLG = ListofContactsPG.size()*2;
+        int NL = ListofContacts.size()*2;
+        // int NL = ListofContactsPP.size()*2;
+        // int NLG = ListofContactsPG.size()*2;
         if(Particles.size()>0)
         {
             Pposition = new double[3*NP];
             PVeloc = new double[3*NP];
+            PForce = new double[3*NP];
             PW = new double[3*NP];
             Ptag = new int[NP];
-            PlistPP = new int[NL];
-            PlistPG = new int[NLG];
+            Plist = new int[NL];
+            // PlistPP = new int[NL];
+            // PlistPG = new int[NLG];
             for(size_t ip=0; ip<Particles.size();++ip)
             {
                 DEM::Disk *Pa = &Particles[ip];
                 Ptag[ip] = 1;
-                Pposition[3*ip] = Pa->X(0);
-                Pposition[3*ip+1] = Pa->X(1);
-                Pposition[3*ip+2] = Pa->X(2);
+                Pposition[3*ip] = Pa->Xb(0);
+                Pposition[3*ip+1] = Pa->Xb(1);
+                Pposition[3*ip+2] = Pa->Xb(2);
                 PVeloc[3*ip] = Pa->V(0);
                 PVeloc[3*ip+1] = Pa->V(1);
                 PVeloc[3*ip+2] = Pa->V(2);
                 PW[3*ip] = Pa->W(0);
                 PW[3*ip+1] = Pa->W(1);
                 PW[3*ip+2] = Pa->W(2);
+                PForce[3*ip] = Pa->Fc(0);
+                PForce[3*ip+1] = Pa->Fc(1);
+                PForce[3*ip+2] = Pa->Fc(2);
             }
             int GN = Particles.size();
-            for(int ip=0; ip<GhostParticles.size();++ip)
+            for(int ip=0; ip<(int)GhostParticles.size();++ip)
             {
                 DEM::Disk *Pa = &GhostParticles[ip];
                 int ipp = ip+GN;
@@ -141,17 +149,25 @@ void Domain::WriteXDMF(char const * FileKey)
                 PW[3*ipp] = Pa->W(0);
                 PW[3*ipp+1] = Pa->W(1);
                 PW[3*ipp+2] = Pa->W(2);
+                PForce[3*ipp] = Pa->Fc(0);
+                PForce[3*ipp+1] = Pa->Fc(1);
+                PForce[3*ipp+2] = Pa->Fc(2);
             }
-            for(size_t il=0; il<ListofContactsPP.size(); ++il)
+            for(size_t il=0; il<ListofContacts.size(); ++il)
             {
-                PlistPP[2*il] = ListofContactsPP[il].first;
-                PlistPP[2*il+1] = ListofContactsPP[il].second;
+                Plist[2*il] = ListofContacts[il].first;
+                Plist[2*il+1] = ListofContacts[il].second;
             }
-            for(size_t il=0; il<ListofContactsPG.size(); ++il)
-            {
-                PlistPG[2*il] = ListofContactsPG[il].first;
-                PlistPG[2*il+1] = ListofContactsPG[il].second;
-            }
+            // for(size_t il=0; il<ListofContactsPP.size(); ++il)
+            // {
+            //     PlistPP[2*il] = ListofContactsPP[il].first;
+            //     PlistPP[2*il+1] = ListofContactsPP[il].second;
+            // }
+            // for(size_t il=0; il<ListofContactsPG.size(); ++il)
+            // {
+            //     PlistPG[2*il] = ListofContactsPG[il].first;
+            //     PlistPG[2*il+1] = ListofContactsPG[il].second;
+            // }
         }
 
         
@@ -220,12 +236,16 @@ void Domain::WriteXDMF(char const * FileKey)
             H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PVeloc);
             dsname.Printf("PW");        
             H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PW);  
+            dsname.Printf("PForce");        
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PForce); 
             dims[0] = NL;
-            dsname.Printf("PListPP");        
-            H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPP);
-            dims[0] = NLG;
-            dsname.Printf("PListPG");        
-            H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPG);    
+            dsname.Printf("PList");        
+            H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,Plist);
+            // dsname.Printf("PListPP");        
+            // H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPP);
+            // dims[0] = NLG;
+            // dsname.Printf("PListPG");        
+            // H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPG);    
            
         }
         
@@ -244,9 +264,11 @@ void Domain::WriteXDMF(char const * FileKey)
             delete [] Ptag;
             delete [] Pposition;
             delete [] PVeloc;
+            delete [] PForce;
             delete [] PW;
-            delete [] PlistPP;
-            delete [] PlistPG;
+            // delete [] PlistPP;
+            // delete [] PlistPG;
+            delete [] Plist;
 
         }
     }
@@ -313,6 +335,24 @@ void Domain::WriteXDMF(char const * FileKey)
         oss << "       </DataItem>\n";
         oss << "     </Attribute>\n";
         oss << "   </Grid>\n";
+        // oss << "   <Grid Name=\"DEM\" GridType=\"Uniform\">\n";
+        // oss << "     <Topology TopologyType=\"Polyvertex\" NumberOfElements=\"" << Particles.size() << "\"/>\n";
+        // oss << "     <Geometry GeometryType=\"XYZ\">\n";
+        // oss << "       <DataItem Format=\"HDF\" NumberType=\"Float\" Precision=\"4\" Dimensions=\"" << Particles.size() << " 3\" >\n";
+        // oss << "        " << fn.CStr() <<":/Pposition \n";
+        // oss << "       </DataItem>\n";
+        // oss << "     </Geometry>\n";
+        // oss << "     <Attribute Name=\"PTag\" AttributeType=\"Scalar\" Center=\"Node\">\n";
+        // oss << "       <DataItem Dimensions=\"" << Particles.size() << "\" NumberType=\"Float\" Precision=\"4\" Format=\"HDF\">\n";
+        // oss << "        " << fn.CStr() <<":/PTag \n";
+        // oss << "       </DataItem>\n";
+        // oss << "     </Attribute>\n";
+        // oss << "     <Attribute Name=\"PForce\" AttributeType=\"Vector\" Center=\"Node\">\n";
+        // oss << "       <DataItem Dimensions=\"" << Particles.size() << " 3\" NumberType=\"Float\" Precision=\"4\" Format=\"HDF\">\n";
+        // oss << "        " << fn.CStr() <<":/PForce\n";
+        // oss << "       </DataItem>\n";
+        // oss << "     </Attribute>\n";
+        // oss << "   </Grid>\n";
         oss << " </Domain>\n";
         oss << "</Xdmf>\n";
     }

@@ -158,6 +158,7 @@ inline void Disk::Translate(double dt)
 {
     //std::cout << F(0) << " " << M << " " << V(0) << std::endl;
     F = Fh+Fc+Ff;
+    // F = Fc+Ff;
     Vec3_t Ft = F;
     if (vf(0)) Ft(0) = 0.0;
     if (vf(1)) Ft(1) = 0.0;
@@ -182,6 +183,7 @@ inline void Disk::Rotate (double dt)
     q2 = 0.5*Q(2);
     q3 = 0.5*Q(3);
     T = Th+Tc+Tf;
+    // T = Tc+Tf;
     Vec3_t Tt = T;
     if (wf(0)) Tt(0) = 0.0;
     if (wf(1)) Tt(1) = 0.0;
