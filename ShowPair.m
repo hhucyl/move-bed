@@ -1,8 +1,8 @@
 clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
-middle = 'test_mvbed_';
-for i = 98:98
+middle = 'test_periodic1_';
+for i = 1:999
 name = strcat(prefix,middle,num2str(i,'%04d'),'.h5');
 pos = h5read(name,'/Pposition');
 nx = h5read(name,'/Nx');
@@ -60,7 +60,7 @@ axis([-40 nx+40 0 ny])
 % axis equal
 
 drawnow
-% cla(gca,'reset')
+cla(gca,'reset')
 % subplot(122)
 % ii = 1:numel(plist)/2;
 % Plist = [plist(2*(ii-1)+1),plist(2*(ii-1)+2)];

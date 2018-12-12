@@ -96,9 +96,11 @@ void Domain::WriteXDMF(char const * FileKey)
             i++;
         }
         double *Pposition = NULL;
+        double *Ppositionb = NULL;
         double *PVeloc = NULL;
         double *PForce = NULL;
         double *PW = NULL;
+        double *PWb = NULL;
         int *Ptag = NULL;
         int *Plist = NULL;
         // int *PlistPP = NULL;
@@ -110,9 +112,11 @@ void Domain::WriteXDMF(char const * FileKey)
         if(Particles.size()>0)
         {
             Pposition = new double[3*NP];
+            Ppositionb = new double[3*NP];
             PVeloc = new double[3*NP];
             PForce = new double[3*NP];
             PW = new double[3*NP];
+            PWb = new double[3*NP];
             Ptag = new int[NP];
             Plist = new int[NL];
             // PlistPP = new int[NL];
@@ -121,15 +125,21 @@ void Domain::WriteXDMF(char const * FileKey)
             {
                 DEM::Disk *Pa = &Particles[ip];
                 Ptag[ip] = 1;
-                Pposition[3*ip] = Pa->Xb(0);
-                Pposition[3*ip+1] = Pa->Xb(1);
-                Pposition[3*ip+2] = Pa->Xb(2);
+                Pposition[3*ip] = Pa->X(0);
+                Pposition[3*ip+1] = Pa->X(1);
+                Pposition[3*ip+2] = Pa->X(2);
+                Ppositionb[3*ip] = Pa->Xb(0);
+                Ppositionb[3*ip+1] = Pa->Xb(1);
+                Ppositionb[3*ip+2] = Pa->Xb(2);
                 PVeloc[3*ip] = Pa->V(0);
                 PVeloc[3*ip+1] = Pa->V(1);
                 PVeloc[3*ip+2] = Pa->V(2);
                 PW[3*ip] = Pa->W(0);
                 PW[3*ip+1] = Pa->W(1);
                 PW[3*ip+2] = Pa->W(2);
+                PWb[3*ip] = Pa->Wb(0);
+                PWb[3*ip+1] = Pa->Wb(1);
+                PWb[3*ip+2] = Pa->Wb(2);
                 PForce[3*ip] = Pa->Fc(0);
                 PForce[3*ip+1] = Pa->Fc(1);
                 PForce[3*ip+2] = Pa->Fc(2);
@@ -143,12 +153,18 @@ void Domain::WriteXDMF(char const * FileKey)
                 Pposition[3*ipp] = Pa->X(0);
                 Pposition[3*ipp+1] = Pa->X(1);
                 Pposition[3*ipp+2] = Pa->X(2);
+                Ppositionb[3*ipp] = Pa->Xb(0);
+                Ppositionb[3*ipp+1] = Pa->Xb(1);
+                Ppositionb[3*ipp+2] = Pa->Xb(2);
                 PVeloc[3*ipp] = Pa->V(0);
                 PVeloc[3*ipp+1] = Pa->V(1);
                 PVeloc[3*ipp+2] = Pa->V(2);
                 PW[3*ipp] = Pa->W(0);
                 PW[3*ipp+1] = Pa->W(1);
                 PW[3*ipp+2] = Pa->W(2);
+                PWb[3*ipp] = Pa->Wb(0);
+                PWb[3*ipp+1] = Pa->Wb(1);
+                PWb[3*ipp+2] = Pa->Wb(2);
                 PForce[3*ipp] = Pa->Fc(0);
                 PForce[3*ipp+1] = Pa->Fc(1);
                 PForce[3*ipp+2] = Pa->Fc(2);
@@ -232,10 +248,14 @@ void Domain::WriteXDMF(char const * FileKey)
             dims[0] = 3*NP;
             dsname.Printf("Pposition");        
             H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,Pposition);
+            dsname.Printf("Ppositionb");        
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,Ppositionb);
             dsname.Printf("PVeloc");        
             H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PVeloc);
             dsname.Printf("PW");        
-            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PW);  
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PW);
+            dsname.Printf("PWb");        
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PWb);    
             dsname.Printf("PForce");        
             H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PForce); 
             dims[0] = NL;
@@ -263,9 +283,11 @@ void Domain::WriteXDMF(char const * FileKey)
         {
             delete [] Ptag;
             delete [] Pposition;
+            delete [] Ppositionb;
             delete [] PVeloc;
             delete [] PForce;
             delete [] PW;
+            delete [] PWb;
             // delete [] PlistPP;
             // delete [] PlistPG;
             delete [] Plist;

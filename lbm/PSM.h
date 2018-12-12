@@ -202,6 +202,8 @@ inline void Domain::AddDisksG()
     #endif
     for(size_t ip=0; ip<Particles.size(); ++ip)
     {
+        Particles[ip].Fh = 0.0,0.0,0.0;
+        Particles[ip].Th = 0.0,0.0,0.0;
         adddiskG_sub(&Particles[ip]);
         // std::cout<<ip<<std::endl;
         
@@ -214,6 +216,8 @@ inline void Domain::AddDisksG()
     for(size_t ip=0; ip<GhostParticles.size(); ++ip)
     {
         DEM::Disk *Pa = &GhostParticles[ip];
+        Pa->Fh = 0.0,0.0,0.0;
+        Pa->Th = 0.0,0.0,0.0;
         if(!Pa->Ghost) continue;
         // std::cout<<ip<<std::endl;
         adddiskG_sub(&GhostParticles[ip]);

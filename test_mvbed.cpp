@@ -86,7 +86,7 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.g = -2e-7;
+    my_dat.g = -2e-9;
     my_dat.R = R;
     Vec3_t g0(my_dat.g,0.0,0.0);
     dom.Nproc = Nproc;       
@@ -159,9 +159,9 @@ int main (int argc, char **argv) try
     // }
 
 
-    double Tf = 1e6;
+    double Tf = 2e2;
     
-    double dtout = 1e3;;
+    double dtout = 1e2;;
     dom.Box = 0, nx-1, 0;
     dom.modexy = 0;
     //solving

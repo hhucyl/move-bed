@@ -1,0 +1,10 @@
+/home/pzhang/chen/move-bed/CMakeFiles/test_periodic2.dir
+/home/pzhang/chen/move-bed/CMakeFiles/test_periodic1.dir
+/home/pzhang/chen/move-bed/CMakeFiles/test_periodic.dir
+/home/pzhang/chen/move-bed/CMakeFiles/rebuild_cache.dir
+/home/pzhang/chen/move-bed/CMakeFiles/test_circle_move.dir
+/home/pzhang/chen/move-bed/CMakeFiles/edit_cache.dir
+/home/pzhang/chen/move-bed/CMakeFiles/test_circle_spin.dir
+/home/pzhang/chen/move-bed/CMakeFiles/test_circle2.dir
+/home/pzhang/chen/move-bed/CMakeFiles/test_mvbed.dir
+/home/pzhang/chen/move-bed/CMakeFiles/test_collision.dir

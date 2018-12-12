@@ -7,6 +7,8 @@ inline void Domain::Solve(double Tf, double dtout, char const * TheFileKey, ptDF
     std::cout<<"Box "<<Box<<std::endl;
     std::cout<<"modexy "<<modexy<<std::endl;
     double tout = 0;
+    Util::Stopwatch stopwatch;
+    printf("\n%s--- Solving ---------------------------------------------------------------------%s\n",TERM_CLR1   , TERM_RST);
     while(Time<Tf)
     {
         if (Time>=tout)
@@ -24,11 +26,17 @@ inline void Domain::Solve(double Tf, double dtout, char const * TheFileKey, ptDF
             tout += dtout;
         }
         
-        
+
+       
+
         for(int i=0; i<std::floor(dt/dtdem); ++i)
         {
-            // std::cout<<i<<std::endl;
-            SetZero();
+            bool flag = i==0 || i==(std::floor(dt/dtdem)-1);
+            // flag = true;
+            // std::cout<<Time<<" "<<flag<<std::endl;
+            if(flag){
+                SetZero();
+            }
             //set added force and check leave particles
             LeaveAndForcedForce();
 
@@ -39,15 +47,23 @@ inline void Domain::Solve(double Tf, double dtout, char const * TheFileKey, ptDF
         
          
             //set fluid force
-            AddDisksG();
+            if(flag){
+                AddDisksG();
+            }
 
             //update particles contact
-            UpdateParticlesContacts();
+            if(flag){
+                UpdateParticlesContacts();
+            }
+            
             UpdateParticlePairForce();
         
             //move
             MoveParticles();
         }
+
+        
+
         //collide and streaming
         (this->*ptr2collide)();
         Stream();
@@ -56,7 +72,7 @@ inline void Domain::Solve(double Tf, double dtout, char const * TheFileKey, ptDF
 
         Time += 1;
     }
-    EndSolve();
+    printf("%s  Final CPU time       = %s\n",TERM_CLR2, TERM_RST);
 }
 
 

@@ -185,6 +185,8 @@ public:
     void GhostPeriodic();
     void MoveParticles();
     void Initial(double rho, Vec3_t &v0,  Vec3_t &g0);
+    void InitialFromH5(char const * TheFileKey, Vec3_t &g0);
+
 
     void Solve(double Tf, double dtout, char const * TheFileKey, ptDFun_t ptSetup, ptDFun_t ptReport);
     #ifdef USE_OMP
@@ -556,17 +558,17 @@ inline void Domain::StartSolve()
             
         }
     }
-    printf("\033[01;33m--- Solving ---\033[0m\n");
+    // printf("\033[01;33m--- Solving ---\033[0m\n");
     printf("--- Tau = %g ---\n",Tau);
-    StartTime = std::clock();
+    // StartTime = std::clock();
     idx_out = 0;
 }
 inline void Domain::EndSolve()
 {
-    using namespace std;
-    EndTime = std::clock();
-    double ttime = (double)(EndTime - StartTime)/CLOCKS_PER_SEC;
-    printf("\033[01;34m---Elapsed Time = %f s---\033[0m\n",ttime);
+    // using namespace std;
+    // EndTime = std::clock();
+    // double ttime = (double)(EndTime - StartTime)/CLOCKS_PER_SEC;
+    // printf("\033[01;34m---Elapsed Time = %f s---\033[0m\n",ttime);
     
 }
 

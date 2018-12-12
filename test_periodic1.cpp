@@ -34,7 +34,7 @@ void Report(LBM::Domain &dom, void *UD)
             F+=dom.Flbm[ix][iy][0](0);
         }
         
-        dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<dom.Particles[0].F(0)-dom.Particles[0].Ff(0) <<Util::_8s<<dom.Particles[0].X(0)<<Util::_8s<<dom.Particles[0].F<<Util::_8s<<dom.ListofContacts.size()<<dom.GhostParticles[0].Ghost<<std::endl;
+        dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<dom.Particles[0].V(0) <<Util::_8s<<dom.Particles[0].X(0)<<Util::_8s<<dom.Particles[0].F<<Util::_8s<<dom.ListofContacts.size()<<dom.GhostParticles[0].Ghost<<std::endl;
         
     }
 }
@@ -68,16 +68,13 @@ int main (int argc, char **argv) try
     Vec3_t g0(0.0,0.0,0.0);
     dom.Nproc = Nproc;       
 
-    //dom.Isq = true;
-    // dom.IsF = false;
-    // dom.IsFt = false;
+    
    
     //initial
     double rho = 1.0;
     double rhos = 2.0;
     my_dat.rhos = rhos;
     Vec3_t v0(0.0,0.0,0.0);
-    dom.Initial(rho,v0,g0);
     
     Vec3_t pos(nx-1-1,ny/2,0.0);
     // Vec3_t pos(nx*0.5,ny-1-3.0*R,0.0);
@@ -116,15 +113,17 @@ int main (int argc, char **argv) try
     //     dom.IsSolid[nx-1][iy][0] = true;
     // }
 
-
-    double Tf = 2;
+    // dom.Initial(rho,v0,g0);
+    dom.IsF = true;
+    dom.InitialFromH5("test_periodic1_0001.h5",g0);
+    double Tf = 30;
     
-    double dtout = 1;
+    double dtout = 10;
     dom.Box = 0.0, (double) ny-1, 0.0;
     dom.modexy = 0;
     
     //solving
-    dom.Solve( Tf, dtout, "test_periodic1", NULL, Report);
+    dom.Solve( Tf, dtout, "test_periodic2", NULL, Report);
     return 0;
 
 }MECHSYS_CATCH

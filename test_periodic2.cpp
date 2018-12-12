@@ -68,16 +68,13 @@ int main (int argc, char **argv) try
     Vec3_t g0(0.0,0.0,0.0);
     dom.Nproc = Nproc;       
 
-    //dom.Isq = true;
-    // dom.IsF = false;
-    // dom.IsFt = false;
+    
    
     //initial
     double rho = 1.0;
     double rhos = 2.0;
     my_dat.rhos = rhos;
     Vec3_t v0(0.0,0.0,0.0);
-    dom.Initial(rho,v0,g0);
     
     Vec3_t pos(R+5,ny/2,0.0);
     // Vec3_t pos(nx*0.5,ny-1-3.0*R,0.0);
@@ -137,8 +134,11 @@ int main (int argc, char **argv) try
     //     dom.IsSolid[nx-1][iy][0] = true;
     // }
 
+    // dom.Initial(rho,v0,g0);
+    dom.IsF = true;
+    dom.InitialFromH5("test_periodic1_0001.h5",g0);
 
-    double Tf = 1e4;
+    double Tf = 40;
     
     double dtout = 10;
     dom.Box = 0.0, (double) ny-1, 0.0;
@@ -146,7 +146,7 @@ int main (int argc, char **argv) try
     //solving
     std::cout<<std::floor(dom.dt/dom.dtdem)<<std::endl;
 
-    dom.Solve( Tf, dtout, "test_periodic1", NULL, Report);
+    dom.Solve( Tf, dtout, "test_periodic2", NULL, Report);
     return 0;
 
 }MECHSYS_CATCH

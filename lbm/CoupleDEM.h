@@ -119,68 +119,6 @@ inline void Domain::update_pair_sub(DEM::DiskPair &pair, DEM::Disk* P1, DEM::Dis
     }
     
 }
-/*
-inline void Domain::UpdateParticlePairForce()
-{
-    //ordinary particle
-    #pragma omp parallel for schedule(static) num_threads(Nproc)
-    for(size_t i=0; i<ListofContactsPP.size();++i)
-    {
-        int ip1 = ListofContactsPP[i].first;
-        int ip2 = ListofContactsPP[i].second;
-        if(!Particles[ip1].IsFree() && !Particles[ip2].IsFree()) continue;
-        
-        DEM::DiskPair pair(&Particles[ip1],&Particles[ip2]);
-        pair.CalcForce(dtdem);
-        
-        update_pair_sub(pair,&Particles[ip1],&Particles[ip2]);
-           
-        std::cout<<Time<<" "<<pair.delta<<" "<<Particles[ip1].Fc<<" PP "<<ip1<<" "<<ip2<<std::endl;
-        
-    }
-    //ghost particle
-    #pragma omp parallel for schedule(static) num_threads(Nproc)
-    for(size_t i=0; i<ListofContactsPG.size();++i)
-    {
-        int ip1 = ListofContactsPG[i].first;
-        int ip2 = ListofContactsPG[i].second;
-        if(!Particles[ip1].IsFree() && !Particles[ip2].IsFree()) continue;
-        bool flag1 = GhostParticles[ip1].Ghost;
-        bool flag2 = GhostParticles[ip2].Ghost;
-        if(flag1&&!flag2)
-        {
-            DEM::DiskPair pair(&GhostParticles[ip1],&Particles[ip2]);
-            pair.CalcForce(dtdem);
-            
-            update_pair_sub(pair,&Particles[ip1],&Particles[ip2]);
-            // if(pair.delta>0)   
-            std::cout<<Time<<" "<<pair.delta<<" 1PG "<<ip1<<" "<<ip2<<std::endl;
-
-            
-        }else{
-            if(!flag1&&flag2)
-            {
-                DEM::DiskPair pair(&Particles[ip1],&GhostParticles[ip2]);
-                pair.CalcForce(dtdem);
-            
-                update_pair_sub(pair,&Particles[ip1],&Particles[ip2]);
-                // if(pair.delta>0) 
-                std::cout<<Time<<" "<<pair.delta<<" 2PG "<<ip1<<" "<<ip2<<std::endl;
-
-            }else{
-                DEM::DiskPair pair(&Particles[ip1],&GhostParticles[ip2]);
-                pair.CalcForce(dtdem);
-            
-                update_pair_sub(pair,&Particles[ip1],&Particles[ip2]);
-                // if(pair.delta>0) 
-                std::cout<<Time<<" "<<pair.delta<<" "<<Particles[ip1].Fc<<" 3PG "<<ip1<<" "<<ip2<<std::endl;
-            }
-        }
-        
-
-    }
-}
-*/
 
 inline void Domain::UpdateParticlePairForce()
 {
@@ -257,10 +195,10 @@ inline void Domain::LeaveAndForcedForce()
     for(size_t i=0;i<Particles.size();i++)
     {
         Particles[i].F = 0.0,0.0,0.0;
-        Particles[i].Fh = 0.0,0.0,0.0;
+        // Particles[i].Fh = 0.0,0.0,0.0;
         Particles[i].Fc = 0.0,0.0,0.0;
         Particles[i].T = 0.0,0.0,0.0;
-        Particles[i].Th = 0.0,0.0,0.0;
+        // Particles[i].Th = 0.0,0.0,0.0;
         Particles[i].Tc = 0.0,0.0,0.0;
         
         
@@ -282,11 +220,11 @@ inline void Domain::GhostPeriodic()
         if(!Pa->Ghost) Pa->X=-20*Pa->R;//Be Carefull about this
         Pa->Ff = 0.0,0.0,0.0;
         Pa->F = 0.0,0.0,0.0;
-        Pa->Fh = 0.0,0.0,0.0;
+        // Pa->Fh = 0.0,0.0,0.0;
         Pa->Fc = 0.0,0.0,0.0;
         Pa->Tf = 0.0,0.0,0.0;
         Pa->T = 0.0,0.0,0.0;
-        Pa->Th = 0.0,0.0,0.0;
+        // Pa->Th = 0.0,0.0,0.0;
         Pa->Tc = 0.0,0.0,0.0;
 
     }
@@ -294,5 +232,67 @@ inline void Domain::GhostPeriodic()
     
 }
 
+/*
+inline void Domain::UpdateParticlePairForce()
+{
+    //ordinary particle
+    #pragma omp parallel for schedule(static) num_threads(Nproc)
+    for(size_t i=0; i<ListofContactsPP.size();++i)
+    {
+        int ip1 = ListofContactsPP[i].first;
+        int ip2 = ListofContactsPP[i].second;
+        if(!Particles[ip1].IsFree() && !Particles[ip2].IsFree()) continue;
+        
+        DEM::DiskPair pair(&Particles[ip1],&Particles[ip2]);
+        pair.CalcForce(dtdem);
+        
+        update_pair_sub(pair,&Particles[ip1],&Particles[ip2]);
+           
+        std::cout<<Time<<" "<<pair.delta<<" "<<Particles[ip1].Fc<<" PP "<<ip1<<" "<<ip2<<std::endl;
+        
+    }
+    //ghost particle
+    #pragma omp parallel for schedule(static) num_threads(Nproc)
+    for(size_t i=0; i<ListofContactsPG.size();++i)
+    {
+        int ip1 = ListofContactsPG[i].first;
+        int ip2 = ListofContactsPG[i].second;
+        if(!Particles[ip1].IsFree() && !Particles[ip2].IsFree()) continue;
+        bool flag1 = GhostParticles[ip1].Ghost;
+        bool flag2 = GhostParticles[ip2].Ghost;
+        if(flag1&&!flag2)
+        {
+            DEM::DiskPair pair(&GhostParticles[ip1],&Particles[ip2]);
+            pair.CalcForce(dtdem);
+            
+            update_pair_sub(pair,&Particles[ip1],&Particles[ip2]);
+            // if(pair.delta>0)   
+            std::cout<<Time<<" "<<pair.delta<<" 1PG "<<ip1<<" "<<ip2<<std::endl;
+
+            
+        }else{
+            if(!flag1&&flag2)
+            {
+                DEM::DiskPair pair(&Particles[ip1],&GhostParticles[ip2]);
+                pair.CalcForce(dtdem);
+            
+                update_pair_sub(pair,&Particles[ip1],&Particles[ip2]);
+                // if(pair.delta>0) 
+                std::cout<<Time<<" "<<pair.delta<<" 2PG "<<ip1<<" "<<ip2<<std::endl;
+
+            }else{
+                DEM::DiskPair pair(&Particles[ip1],&GhostParticles[ip2]);
+                pair.CalcForce(dtdem);
+            
+                update_pair_sub(pair,&Particles[ip1],&Particles[ip2]);
+                // if(pair.delta>0) 
+                std::cout<<Time<<" "<<pair.delta<<" "<<Particles[ip1].Fc<<" 3PG "<<ip1<<" "<<ip2<<std::endl;
+            }
+        }
+        
+
+    }
+}
+*/
 
 #endif

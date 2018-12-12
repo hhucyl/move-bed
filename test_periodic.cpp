@@ -90,7 +90,7 @@ int main (int argc, char **argv) try
     dom.Nproc = Nproc;       
 
     //dom.Isq = true;
-    // dom.IsF = false;
+    dom.IsF = false;
     // dom.IsFt = false;
    
     //initial
@@ -98,7 +98,6 @@ int main (int argc, char **argv) try
     double rhos = 2.0;
     my_dat.rhos = rhos;
     Vec3_t v0(0.0,0.0,0.0);
-    Initial(dom,rho,v0,g0);
     
     Vec3_t pos(R+1,0.5*ny,0.0);
     // Vec3_t pos(nx*0.5,ny-1-3.0*R,0.0);
@@ -144,8 +143,9 @@ int main (int argc, char **argv) try
     //     dom.IsSolid[nx-1][iy][0] = true;
     // }
 
+    Initial(dom,rho,v0,g0);
 
-    double Tf = 3500;
+    double Tf = 30;
     
     double dtout = 10;
     char const * TheFileKey = "test_periodic";
