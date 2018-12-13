@@ -1,8 +1,8 @@
 clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
-middle = 'test_periodic1_';
-for i = 1:999
+middle = 'test_mvbed_';
+for i = 999:999
 name = strcat(prefix,middle,num2str(i,'%04d'),'.h5');
 pos = h5read(name,'/Pposition');
 nx = h5read(name,'/Nx');
@@ -20,14 +20,14 @@ num = 0;
 color = {'r','g'};
 % subplot(121)
 figure(1)
-viscircles(Pos(1,1:2),20,'color',char(color(ceil(1/Np))));
+viscircles(Pos(1,1:2),10,'color',char(color(ceil(1/Np))));
 hold on
 quiver(Pos(:,1),Pos(:,2),Pforce(:,1),Pforce(:,2),0.2)
 plot(Pos(1,1),Pos(1,2),'b.')
 text(Pos(1,1),Pos(1,2),num2str(1-1))
 for j=2:Np*2
     if(ptag(j)>0)
-        viscircles(Pos(j,1:2),20,'color',char(color(ceil(j/Np))));
+        viscircles(Pos(j,1:2),10,'color',char(color(ceil(j/Np))));
         plot(Pos(j,1),Pos(j,2),'b.')
         if(j<=Np)
             text(Pos(j,1),Pos(j,2),num2str(j-1));
@@ -60,7 +60,7 @@ axis([-40 nx+40 0 ny])
 % axis equal
 
 drawnow
-cla(gca,'reset')
+% cla(gca,'reset')
 % subplot(122)
 % ii = 1:numel(plist)/2;
 % Plist = [plist(2*(ii-1)+1),plist(2*(ii-1)+2)];

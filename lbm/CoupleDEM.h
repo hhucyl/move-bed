@@ -180,6 +180,7 @@ inline void Domain::UpdateParticlePairForce()
 
 inline void Domain::MoveParticles()
 {
+    // std::cout<<dtdem<<std::endl;
     #pragma omp parallel for schedule(static) num_threads(Nproc)
     for (size_t i=0; i<Particles.size(); i++)
     {

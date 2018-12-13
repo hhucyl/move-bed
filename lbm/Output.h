@@ -99,6 +99,7 @@ void Domain::WriteXDMF(char const * FileKey)
         double *Ppositionb = NULL;
         double *PVeloc = NULL;
         double *PForce = NULL;
+        double *PForceh = NULL;
         double *PW = NULL;
         double *PWb = NULL;
         int *Ptag = NULL;
@@ -115,6 +116,7 @@ void Domain::WriteXDMF(char const * FileKey)
             Ppositionb = new double[3*NP];
             PVeloc = new double[3*NP];
             PForce = new double[3*NP];
+            PForceh = new double[3*NP];
             PW = new double[3*NP];
             PWb = new double[3*NP];
             Ptag = new int[NP];
@@ -143,6 +145,9 @@ void Domain::WriteXDMF(char const * FileKey)
                 PForce[3*ip] = Pa->Fc(0);
                 PForce[3*ip+1] = Pa->Fc(1);
                 PForce[3*ip+2] = Pa->Fc(2);
+                PForceh[3*ip] = Pa->Fh(0);
+                PForceh[3*ip+1] = Pa->Fh(1);
+                PForceh[3*ip+2] = Pa->Fh(2);
             }
             int GN = Particles.size();
             for(int ip=0; ip<(int)GhostParticles.size();++ip)
@@ -168,6 +173,9 @@ void Domain::WriteXDMF(char const * FileKey)
                 PForce[3*ipp] = Pa->Fc(0);
                 PForce[3*ipp+1] = Pa->Fc(1);
                 PForce[3*ipp+2] = Pa->Fc(2);
+                PForceh[3*ipp] = Pa->Fh(0);
+                PForceh[3*ipp+1] = Pa->Fh(1);
+                PForceh[3*ipp+2] = Pa->Fh(2);
             }
             for(size_t il=0; il<ListofContacts.size(); ++il)
             {
@@ -257,7 +265,9 @@ void Domain::WriteXDMF(char const * FileKey)
             dsname.Printf("PWb");        
             H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PWb);    
             dsname.Printf("PForce");        
-            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PForce); 
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PForce);
+            dsname.Printf("PForceh");        
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PForceh);  
             dims[0] = NL;
             dsname.Printf("PList");        
             H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,Plist);
@@ -286,6 +296,7 @@ void Domain::WriteXDMF(char const * FileKey)
             delete [] Ppositionb;
             delete [] PVeloc;
             delete [] PForce;
+            delete [] PForceh;
             delete [] PW;
             delete [] PWb;
             // delete [] PlistPP;

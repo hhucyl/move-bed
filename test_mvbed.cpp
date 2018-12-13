@@ -31,26 +31,6 @@ void Report(LBM::Domain &dom, void *UD)
     }
 }
 
-void Initial(LBM::Domain &dom, double rho, Vec3_t &v0,  Vec3_t &g0)
-{
-    
-    for(size_t ix=0; ix<dom.Ndim(0); ix++)
-    for(size_t iy=0; iy<dom.Ndim(1); iy++)
-    for(size_t iz=0; iz<dom.Ndim(2); iz++)
-    {
-        dom.Rho[ix][iy][iz] = rho;
-        dom.Vel[ix][iy][iz] = 0.0, 0.0, 0.0;
-        dom.BForce[ix][iy][iz] = g0;
-        for(size_t k=0; k<dom.Nneigh; ++k)
-        {
-            dom.F[ix][iy][iz][k] = dom.Feq(k,rho,v0);            
-            dom.Ftemp[ix][iy][iz][k] = dom.Feq(k,rho,v0);            
-        }
-    // std::cout<<dom.F[ix][iy][iz][18]<<std::endl;
-        
-    }
-    dom.Rho0 = rho;//very important
-}
 
 double random(double a, double b)
 {
@@ -63,16 +43,16 @@ int main (int argc, char **argv) try
     
     std::srand((unsigned)time(NULL));    
     size_t Nproc = 12;
-    size_t h = 400;
+    size_t h = 800;
     double nu = 0.01;
     if(argc>=2) Nproc = atoi(argv[1]); 
 
-    size_t nx = h+10;
-    size_t ny = 2*h;
+    size_t nx = h+40;
+    size_t ny = h/2;
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
-    double R = 20;
+    double R = 10;
     double Ga = 2.4;
     double rho = 1.0;
     double rhos = 2.0;
@@ -91,15 +71,10 @@ int main (int argc, char **argv) try
     Vec3_t g0(my_dat.g,0.0,0.0);
     dom.Nproc = Nproc;       
 
-    //dom.Isq = true;
-    // dom.IsF = false;
-    // dom.IsFt = false;
-   
     //initial
     
     my_dat.rhos = rhos;
-    Vec3_t v0(0.0,0.0,0.0);
-    Initial(dom,rho,v0,g0);
+    
     
     Vec3_t pos(R+1,R,0.0);
     Vec3_t dxp(0.0,0.0,0.0);
@@ -108,7 +83,7 @@ int main (int argc, char **argv) try
     //DEM
     dom.dtdem = 0.1*dt;
     //fixed
-    for(size_t ip=0; ip<10; ++ip)
+    for(size_t ip=0; ip<40; ++ip)
     {
         // std::cout<<pos<<std::endl;
         dom.Particles.push_back(DEM::Disk(-ip, pos, v, w, rhos, R, dom.dtdem));
@@ -118,10 +93,10 @@ int main (int argc, char **argv) try
     }
     //move
     int num = 0;
-    for(int ipy=0; ipy<9; ++ipy)
+    for(int ipy=0; ipy<10; ++ipy)
     {
         pos = R+1,(2*ipy+2)*R+R+1,0.0;
-        for(int ipx=0; ipx<10; ++ipx)
+        for(int ipx=0; ipx<40; ++ipx)
         {
             Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1));
             dom.Particles.push_back(DEM::Disk(-num, pos+dxr, v, w, rhos, R, dom.dtdem));
@@ -158,10 +133,13 @@ int main (int argc, char **argv) try
     //     dom.IsSolid[nx-1][iy][0] = true;
     // }
 
+    Vec3_t v0(0.0,0.0,0.0);
+    dom.Initial(rho,v0,g0);
+    dom.IsF = true;
 
-    double Tf = 2e2;
+    double Tf = 1e6;
     
-    double dtout = 1e2;;
+    double dtout = 1e3;
     dom.Box = 0, nx-1, 0;
     dom.modexy = 0;
     //solving

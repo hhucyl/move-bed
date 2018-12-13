@@ -6,6 +6,7 @@ inline void Domain::Solve(double Tf, double dtout, char const * TheFileKey, ptDF
     StartSolve();
     std::cout<<"Box "<<Box<<std::endl;
     std::cout<<"modexy "<<modexy<<std::endl;
+    std::cout<<"dt of LBM "<<dt<<" dt of DEM "<<dtdem<<std::endl;
     double tout = 0;
     Util::Stopwatch stopwatch;
     printf("\n%s--- Solving ---------------------------------------------------------------------%s\n",TERM_CLR1   , TERM_RST);
@@ -31,9 +32,11 @@ inline void Domain::Solve(double Tf, double dtout, char const * TheFileKey, ptDF
 
         for(int i=0; i<std::floor(dt/dtdem); ++i)
         {
+            // std::cout<<i<<std::endl;
             bool flag = i==0 || i==(std::floor(dt/dtdem)-1);
             // flag = true;
             // std::cout<<Time<<" "<<flag<<std::endl;
+            // std::cout<<flag<<std::endl;
             if(flag){
                 SetZero();
             }

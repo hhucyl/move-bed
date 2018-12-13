@@ -134,11 +134,11 @@ inline void Domain::adddiskG_sub(DEM::Disk *Pa)
     for(int ix=ixs; ix<ixe; ++ix)
     for(int iy=iys; iy<iye; ++iy) 
     {
-        // std::cout<<ix<<" "<<iy<<std::endl;
         double x = (double) ix;
         double y = (double) iy;
         Vec3_t CC(x,y,0);
         double len = DEM::DiskSquare(Pa->X,CC,Pa->Rh,dx);
+        // std::cout<<ix<<" "<<iy<<" "<<len<<std::endl;
         if (std::fabs(len)<1.0e-12) continue;
         double gamma  = len/(4.0*dx);
         // std::cout<<ix<<" "<<iy<<" "<<iz<<" "<<gamma<<std::endl;

@@ -8,6 +8,7 @@ struct myUserData
     double nu;
     double R;
     double rhos;
+    double g;
 };
 
 void Report(LBM::Domain &dom, void *UD)
@@ -20,7 +21,7 @@ void Report(LBM::Domain &dom, void *UD)
     if(dom.Time <1e-6)
     {
         String fs;
-        fs.Printf("%s.out","settling");
+        fs.Printf("%s.out","settling1");
         // fs.Printf("%s_%d_%d_%g.out","Permeability",dat.bbtype,nx,dom.Tau);
         
         dat.oss_ss.open(fs.CStr(),std::ios::out);
@@ -33,6 +34,7 @@ void Report(LBM::Domain &dom, void *UD)
         {
             F+=dom.Flbm[ix][iy][0](1);
         }
+        F = -F;
         double Cd = 2*F/(dom.Particles[0].V(1)*dom.Particles[0].V(1)*2*dom.Particles[0].R);
         double Re = 2*dom.Particles[0].R*dom.Particles[0].V(1)/dat.nu;
         dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<dom.Particles[0].V(1)<<Util::_8s<<dom.Particles[0].R<<Util::_8s<<Re<<Util::_8s<<Cd<<Util::_8s<<F<<Util::_8s<<dom.Particles[0].F(1)-dom.Particles[0].Ff(1)<<std::endl;
@@ -70,11 +72,8 @@ int main (int argc, char **argv) try
     
     size_t Nproc = 8;
     size_t h = 400;
-    double nu = 0.01;
-    int N=1;
-    if(argc>=2) nu = atof(argv[1]);     
-    if(argc>=3) N = atoi(argv[2]);
-    if(argc>=4) Nproc = atoi(argv[3]); 
+    double nu = 0.1;
+    if(argc>=2) Nproc = atoi(argv[1]); 
 
     size_t nx = h;
     size_t ny = h;
@@ -89,33 +88,41 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.w = 2e-5;
+    my_dat.g = 2e-4;
     my_dat.R = R;
     Vec3_t g0(0.0,0.0,0.0);
     dom.Nproc = Nproc;       
 
-    //dom.Isq = true;
-    // dom.IsF = false;
-    // dom.IsFt = false;
+    
    
     //initial
     double rho = 1.0;
     double rhos = 2.0;
     my_dat.rhos = rhos;
     Vec3_t v0(0.0,0.0,0.0);
-    Initial(dom,rho,v0,g0);
     
-    Vec3_t pos(nx*0.5,ny*0.5,0.0);
+    Vec3_t pos(nx*0.5,ny*0.1,0.0);
     Vec3_t v(0.0,0.0,0.0);
     Vec3_t w(0.0,0.0,0.0);
-    for(size_t ip=0; ip<N; ++ip)
-    {
+    //DEM
+    dom.dtdem = 1.0*dt;
+    dom.Particles.push_back(DEM::Disk(-1, pos, v, w, rhos, R, dom.dtdem));
+    
 
-        dom.Particles.push_back(LBM::Disk(-ip, pos, v, w, rhos, R, dt));
-    }
-    for(size_t ip=0; ip<N; ++ip)
+    std::cout<<"Particles number = "<<dom.Particles.size()<<std::endl;
+    for(size_t ip=0; ip<dom.Particles.size(); ++ip)
     {
-        dom.Particles[ip].Ff = 0.0, M_PI*R*R*rhos*my_dat.g, 0.0;
+        dom.Particles[ip].Ff = 0.0, M_PI*R*R*rhos*my_dat.g , 0.0;
+        // dom.Particles[ip].Ff = 0.0, 0.0 , 0.0;
+        dom.Particles[ip].Kn = 100;
+        dom.Particles[ip].Gn = 0.0;
+        dom.Particles[ip].Kt = 0.0;
+        dom.Particles[ip].Mu = 0.0;
+        dom.Particles[ip].Eta = 0.0;
+        dom.Particles[ip].Beta = 0.0;
+        dom.Particles[ip].Rh = 1.0*R;
+        // dom.Particles[ip].FixVeloc();
+
     }
     for(size_t ix=0; ix<nx; ix++)
     {
@@ -128,53 +135,14 @@ int main (int argc, char **argv) try
         dom.IsSolid[nx-1][iy][0] = true;
     }
 
-
-    double Tf = 1e6;
+    dom.Initial(rho,v0,g0);
+    double Tf = 1e5;
     
-    double dtout = 1e3;
-    char const * TheFileKey = "test_move";
+    double dtout = 1e2;
+    dom.Box = 0, ny-1, 0;
+    dom.modexy = 1;
     //solving
-    dom.StartSolve();
-    double tout = 0;
-    while(dom.Time<Tf)
-    {
-        if (dom.Time>=tout)
-        {
-            
-            String fn;
-            fn.Printf("%s_%04d", TheFileKey, dom.idx_out);
-            
-            dom.WriteXDMF(fn.CStr());
-            dom.idx_out++;
-            // std::cout<<"--- Time = "<<dom.Time<<" "<<Tf<<" ---"<<std::endl;
-            Report(dom,&my_dat); 
-            tout += dtout;
-        }
-        dom.SetZero();
-        //set added force
-        #pragma omp parallel for schedule(static) num_threads(Nproc)
-        for(size_t i=0;i<dom.Particles.size();i++)
-        {
-            dom.Particles[i].F = dom.Particles[i].Ff;
-            dom.Particles[i].T = dom.Particles[i].Tf;
-        }
-        //set fluid force 
-        dom.AddDisksG();
-        
-        //move
-        #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
-        for (size_t i=0; i<N; i++)
-        {
-		    dom.Particles[i].Translate(dt);
-		    dom.Particles[i].Rotate(dt);
-        }
-        //collide and streaming
-        (dom.*dom.ptr2collide)();
-        dom.Stream();
-        dom.BounceBack(false);
-        dom.CalcProps();
-        dom.Time += 1;
-    }
-    dom.EndSolve();
+    dom.Solve( Tf, dtout, "test_move1", NULL, Report);
+    
     return 0;
 }MECHSYS_CATCH
