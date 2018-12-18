@@ -1,13 +1,14 @@
 clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
-middle = 'test_mvbed_';
-for i = 999:999
+middle = 'test_mvbed_3_';
+for i = 682:682
 name = strcat(prefix,middle,num2str(i,'%04d'),'.h5');
 pos = h5read(name,'/Pposition');
 nx = h5read(name,'/Nx');
 ny = h5read(name,'/Ny');
 Np = numel(pos)/6;
+R = 10;
 ii = 1:Np*2;
 Pos = [pos(3*(ii-1)+1),pos(3*(ii-1)+2),pos(3*(ii-1)+3)];
 ptag = h5read(name,'/PTag');
@@ -20,14 +21,14 @@ num = 0;
 color = {'r','g'};
 % subplot(121)
 figure(1)
-viscircles(Pos(1,1:2),10,'color',char(color(ceil(1/Np))));
+viscircles(Pos(1,1:2),R,'color',char(color(ceil(1/Np))));
 hold on
 quiver(Pos(:,1),Pos(:,2),Pforce(:,1),Pforce(:,2),0.2)
 plot(Pos(1,1),Pos(1,2),'b.')
 text(Pos(1,1),Pos(1,2),num2str(1-1))
 for j=2:Np*2
     if(ptag(j)>0)
-        viscircles(Pos(j,1:2),10,'color',char(color(ceil(j/Np))));
+        viscircles(Pos(j,1:2),R,'color',char(color(ceil(j/Np))));
         plot(Pos(j,1),Pos(j,2),'b.')
         if(j<=Np)
             text(Pos(j,1),Pos(j,2),num2str(j-1));
@@ -49,14 +50,14 @@ end
 % end
 
 plot([0 0],[0 ny-1],'k','linewidth',2)
-plot([40 40],[0 ny-1],'k--','linewidth',2)
+plot([2*R 2*R],[0 ny-1],'k--','linewidth',2)
 plot([nx-1 nx-1],[0 ny-1],'k','linewidth',2)
-plot([nx-40-1 nx-41],[0 ny-1],'k--','linewidth',2)
+plot([nx-2*R-1 nx-2*R-1],[0 ny-1],'k--','linewidth',2)
 % title_name = strcat(num2str(i),'   delta = ',num2str(40-norm(Pos(5,:)-Pos(6,:))));
 % dp(i+1,1)= Pos(1,1)-Pos(10,1)+Pos(5,1)-Pos(6,1);
 % title(title_name)
 title(i)
-axis([-40 nx+40 0 ny])
+axis([-2*R nx+2*R 0 ny])
 % axis equal
 
 drawnow

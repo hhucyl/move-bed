@@ -1,11 +1,10 @@
 clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
-% prefix = '/media/pzhang/My Book/move-bed-tmp/-3_slow/'
-middle = 'test_mvbed_3_';
+middle = 'test_mvbed_1_';
 R = 10;
 LP = 40;
-num = 830:999;
+num = 838:92;
 for i = 1:numel(num)
     name = strcat(prefix,middle,num2str(num(i),'%04d'),'.h5');
     nx = h5read(name,'/Nx');

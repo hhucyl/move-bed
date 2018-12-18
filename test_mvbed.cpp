@@ -134,8 +134,10 @@ int main (int argc, char **argv) try
     // }
 
     Vec3_t v0(0.0,0.0,0.0);
-    dom.Initial(rho,v0,g0);
+    // dom.Initial(rho,v0,g0);
     dom.IsF = true;
+    dom.InitialFromH5("test_mvbed_2_0999.h5",g0);
+
 
     double Tf = 1e6;
     
@@ -143,7 +145,7 @@ int main (int argc, char **argv) try
     dom.Box = 0, nx-1, 0;
     dom.modexy = 0;
     //solving
-    dom.Solve( Tf, dtout, "test_mvbed", NULL, NULL);
+    dom.Solve( Tf, dtout, "test_mvbed_3", NULL, NULL);
     
     return 0;
 }MECHSYS_CATCH
