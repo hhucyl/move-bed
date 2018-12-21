@@ -1,11 +1,16 @@
 clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
-% prefix = '/media/pzhang/My Book/move-bed-tmp/-3_slow/'
-middle = 'test_mvbed_3_';
+prefix = '/media/pzhang/My Book/move-bed-tmp/-3_slow/';
+for iiii = 1:4
+if(iiii==1)
+    middle = 'test_mvbed_';
+else
+    middle = strcat('test_mvbed_',num2str(iiii-1),'_');
+end
 R = 10;
 LP = 40;
-num = 830:999;
+num = 1:999;
 for i = 1:numel(num)
     name = strcat(prefix,middle,num2str(num(i),'%04d'),'.h5');
     nx = h5read(name,'/Nx');
@@ -54,12 +59,12 @@ for i = 1:numel(num)
     vvx1 = vx(0.5*nx,:);
     pv = P(0.5*nx,:).*vvx1;
     Y(i,1) = -sum(pv);
-    plot(i,Y(i,1),'b*')
+    plot(i+(iiii-1)*numel(num),Y(i,1),'b*')
     ylabel('\rhov^2')
     hold on
     subplot(235)
     dp = sum(P(1,:))-sum(P(nx,:));
-    plot(i,dp,'b*')
+    plot(i+(iiii-1)*numel(num),dp,'b*')
     hold on
     ylabel('\DeltaP')
 %     subplot(335)
@@ -73,19 +78,20 @@ for i = 1:numel(num)
 % %     axis equal
     subplot(236)
     ppv(i,1) = (sum(pvec(1:3*NP).^2))^0.5;
-    plot(i,ppv(i,1),'b*')
+    plot(i+(iiii-1)*numel(num),ppv(i,1),'b*')
     hold on
     ylabel('\v_pa^2')
     drawnow
 end
 
-figure()
-sp = size(Pa);
-Paa = sum(Pa,2);
-plot((Paa-min(Paa))./(max(Paa)-min(Paa)))
-ylabel('\itp^*')
-lax = mean(llxp,2);
-lay = mean(llyp,2);
-lay_n = (lay-min(lay))./(max(lay)-min(lay));
-hold on
-plot(1:20:nx-40,lay_n,'rs')
+% figure()
+% sp = size(Pa);
+% Paa = sum(Pa,2);
+% plot((Paa-min(Paa))./(max(Paa)-min(Paa)))
+% ylabel('\itp^*')
+% lax = mean(llxp,2);
+% lay = mean(llyp,2);
+% lay_n = (lay-min(lay))./(max(lay)-min(lay));
+% hold on
+% plot(1:20:nx-40,lay_n,'rs')
+end

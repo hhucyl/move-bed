@@ -66,7 +66,7 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.g = -2e-9;
+    my_dat.g = -2e-8;
     my_dat.R = R;
     Vec3_t g0(my_dat.g,0.0,0.0);
     dom.Nproc = Nproc;       
@@ -81,33 +81,35 @@ int main (int argc, char **argv) try
     Vec3_t v(0.0,0.0,0.0);
     Vec3_t w(0.0,0.0,0.0);
     //DEM
-    dom.dtdem = 0.1*dt;
+    dom.dtdem = 0.01*dt;
+    int pnum = 0;
     //fixed
     for(size_t ip=0; ip<40; ++ip)
     {
         // std::cout<<pos<<std::endl;
-        dom.Particles.push_back(DEM::Disk(-ip, pos, v, w, rhos, R, dom.dtdem));
+        dom.Particles.push_back(DEM::Disk(pnum, pos, v, w, rhos, R, dom.dtdem));
         dom.Particles[ip].FixVeloc();
         dxp = 2.0*R+1,0.0,0.0;
         pos = pos+dxp;
+        pnum++;
     }
     //move
-    int num = 0;
     for(int ipy=0; ipy<10; ++ipy)
     {
         pos = R+1,(2*ipy+2)*R+R+1,0.0;
         for(int ipx=0; ipx<40; ++ipx)
         {
             Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1));
-            dom.Particles.push_back(DEM::Disk(-num, pos+dxr, v, w, rhos, R, dom.dtdem));
+            dom.Particles.push_back(DEM::Disk(-pnum, pos+dxr, v, w, rhos, R, dom.dtdem));
             // std::cout<<pos(0)<<" "<<pos(1)<<std::endl;
             dxp = 2.0*R+1,0.0,0.0;
             pos = pos+dxp;
-            num++;
+            pnum++;
         }   
     }
 
     std::cout<<"Particles number = "<<dom.Particles.size()<<std::endl;
+    
     for(int ip=0; ip<dom.Particles.size(); ++ip)
     {
         dom.Particles[ip].Ff = 0.0, -M_PI*R*R*rhos*gy, 0.0;
@@ -136,13 +138,13 @@ int main (int argc, char **argv) try
     Vec3_t v0(0.0,0.0,0.0);
     // dom.Initial(rho,v0,g0);
     dom.IsF = true;
-    dom.InitialFromH5("test_mvbed_2_0999.h5",g0);
+    dom.InitialFromH5("test_mvbed_1_0536.h5",g0);
 
 
-    double Tf = 1e6;
+    double Tf = 1e5;
     
     double dtout = 1e3;
-    dom.Box = 0, nx-1, 0;
+    dom.Box = 0.0,(double) nx-1, 0.0;
     dom.modexy = 0;
     //solving
     dom.Solve( Tf, dtout, "test_mvbed_3", NULL, NULL);

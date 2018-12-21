@@ -2,7 +2,7 @@ clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
 middle = 'test_mvbed_3_';
-for i = 682:682
+for i = 3:3
 name = strcat(prefix,middle,num2str(i,'%04d'),'.h5');
 pos = h5read(name,'/Pposition');
 nx = h5read(name,'/Nx');

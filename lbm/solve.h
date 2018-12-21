@@ -10,6 +10,7 @@ inline void Domain::Solve(double Tf, double dtout, char const * TheFileKey, ptDF
     double tout = 0;
     Util::Stopwatch stopwatch;
     printf("\n%s--- Solving ---------------------------------------------------------------------%s\n",TERM_CLR1   , TERM_RST);
+    GhostParticles.assign(Particles.begin(), Particles.end()); 
     while(Time<Tf)
     {
         if (Time>=tout)
@@ -20,23 +21,23 @@ inline void Domain::Solve(double Tf, double dtout, char const * TheFileKey, ptDF
             
             WriteXDMF(fn.CStr());
             idx_out++;
-            // std::cout<<"--- Time = "<<Time<<" "<<Tf<<" ---"<<std::endl;
+            
             if (ptReport!=NULL) (*ptReport) ((*this), UserData); 
+            
             
 
             tout += dtout;
         }
         
 
-       
+        
+
 
         for(int i=0; i<std::floor(dt/dtdem); ++i)
         {
             // std::cout<<i<<std::endl;
             bool flag = i==0 || i==(std::floor(dt/dtdem)-1);
-            // flag = true;
-            // std::cout<<Time<<" "<<flag<<std::endl;
-            // std::cout<<flag<<std::endl;
+        
             if(flag){
                 SetZero();
             }
@@ -64,7 +65,6 @@ inline void Domain::Solve(double Tf, double dtout, char const * TheFileKey, ptDF
             //move
             MoveParticles();
         }
-
         
 
         //collide and streaming

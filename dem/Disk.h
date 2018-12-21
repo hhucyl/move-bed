@@ -33,6 +33,7 @@ public:
     Vec3_t X0;             ///< initial position of the particle
     Vec3_t X;              ///< position of the particle
     Vec3_t Xb;             ///< position of the particle before
+    Vec3_t Xbt;
     Vec3_t V;              ///< velocity of the CM
     Vec3_t W;              ///< angular velocity
     Vec3_t Wb;             ///< angular velocity
@@ -71,6 +72,7 @@ inline Disk::Disk(int TheTag, Vec3_t const & TheX, Vec3_t const & TheV, Vec3_t c
     M   = M_PI*R*R*Therho;
     I   = 0.5*M*R*R;
     Xb  = X - dt*V;
+    Xbt = Xb;
     Wb  = W;
     F   = 0.0,0.0,0.0;
     Fh   = 0.0,0.0,0.0;
@@ -108,7 +110,7 @@ inline void Disk::Periodic(int modexy, Vec3_t &Box)
         if(dist1<2*R)
         {
             Ghost = true;
-            double distb = std::fabs(Xb(modexy)-Box(0));
+            double distb = Xb(modexy)-Box(0);
             X(modexy) = Box(1) + dist1;
             Xb(modexy) = Box(1) + distb;
         }
@@ -117,9 +119,9 @@ inline void Disk::Periodic(int modexy, Vec3_t &Box)
         if(dist2<2*R)
         {
             Ghost = true;
-            double distb = std::fabs(Xb(modexy)-Box(1));
+            double distb = Xb(modexy)-Box(1);
             X(modexy) = Box(0) - dist2;
-            Xb(modexy) = Box(0) - distb;
+            Xb(modexy) = Box(0) + distb;
         }
         
 }
@@ -131,14 +133,13 @@ inline void Disk::Leave(int modexy, Vec3_t &Box)
 {
     if(IsFree())
     {
-        if(X(modexy)<Box(0))
-        {
+        if(1000*X(modexy)<1000*Box(0))
+        {   
             double dist = std::fabs(X(modexy)-Box(0));
-            X(modexy) = Box(1)-dist;
-        
+            X(modexy) = Box(1)-dist;        
             double distb = Xb(modexy)-Box(0);
-            Xb(modexy) = Box(1)-distb;
-        
+            Xb(modexy) = Box(1)+distb;;
+
         }
         if(X(modexy)>Box(1))
         {
@@ -170,7 +171,9 @@ inline void Disk::Translate(double dt)
 
     Vec3_t Xa = 2*X - Xb + Ft*(dt*dt/M);
     Vec3_t tp = Xa - X;
+    // if(Tag==-396) std::cout<<tp(0)<<std::endl;
     V         = 0.5*(Xa - Xb)/dt;
+    Xbt       = Xb;
     Xb        = X;
     X         = Xa;
 }
