@@ -35,6 +35,8 @@
 #include <mechsys/dem/special_functions.h>
 #include "../dem/Disk.h"
 #include "../dem/Interaction.h"
+
+#include "../rw/particle.h"
 enum LBMethod
 {
     D2Q5,     ///< 2D 5 velocities
@@ -189,6 +191,9 @@ public:
 
 
     void Solve(double Tf, double dtout, char const * TheFileKey, ptDFun_t ptSetup, ptDFun_t ptReport);
+    void SolveRW(double Tf, double dtout, char const * TheFileKey, ptDFun_t ptSetup, ptDFun_t ptReport);
+    void rwsolve_sub(double dt);
+    void CheckInside();
     #ifdef USE_OMP
     omp_lock_t      lck;                      ///< to protect variables in multithreading
     #endif
@@ -216,8 +221,8 @@ public:
     Vec3_t const *  C;                        ///< The array of lattice velocities
     Mat_t        M;                           ///< Transformation matrix to momentum space for MRT calculations
     Mat_t        Minv;                        ///< Inverse Transformation matrix to momentum space for MRT calculations
-    Vec_t        S;                           ///< Vector of relaxation times for MRT
-    size_t       Nneigh;                      ///< Number of Neighbors, depends on the scheme
+    Vec_t        S;                               ///< Vector of relaxation times for MRT
+    size_t       Nneigh;                        ///< Number of Neighbors, depends on the scheme
     double       dt;                          ///< Time Step
     double       dx;                          ///< Grid size
     double       Cs;                          ///< Lattice Velocity
@@ -245,6 +250,7 @@ public:
     Vec3_t ***Flbm;
     double ***Gamma;
     int ***Check;
+    // int ***CheckRh;
     double we;
     double wej;
     double wxx;
@@ -256,6 +262,7 @@ public:
     std::vector<std::pair<int,int>> ListofContacts;
     // std::vector<std::pair<int,int>> ListofContactsPP;
     // std::vector<std::pair<int,int>> ListofContactsPG;
+    std::vector<RW::Particle> RWParticles;
 
     double dtdem;
     Vec3_t Box;
@@ -417,6 +424,7 @@ inline Domain::Domain(LBMethod TheMethod, CollideMethod TheMethodC,  double Then
     IsSolid     = new bool   **  [Ndim(0)];
     Gamma       = new double **  [Ndim(0)];
     Check       = new int **  [Ndim(0)];
+    // CheckRh       = new int **  [Ndim(0)];
     for (size_t nx=0;nx<Ndim(0);nx++)
     {
         F       [nx]    = new double ** [Ndim(1)];
@@ -432,6 +440,7 @@ inline Domain::Domain(LBMethod TheMethod, CollideMethod TheMethodC,  double Then
         Flbm    [nx]    = new Vec3_t *  [Ndim(1)];
         Gamma   [nx]    = new double *  [Ndim(1)];
         Check   [nx]    = new int *  [Ndim(1)];
+        // CheckRh   [nx]    = new int *  [Ndim(1)];
         for (size_t ny=0;ny<Ndim(1);ny++)
         {
             F       [nx][ny]    = new double * [Ndim(2)];
@@ -447,6 +456,7 @@ inline Domain::Domain(LBMethod TheMethod, CollideMethod TheMethodC,  double Then
             Flbm    [nx][ny]    = new Vec3_t   [Ndim(2)];
             Gamma   [nx][ny]    = new double   [Ndim(2)];        
             Check   [nx][ny]    = new int   [Ndim(2)];        
+            // CheckRh   [nx][ny]    = new int   [Ndim(2)];        
             for (size_t nz=0;nz<Ndim(2);nz++)
             {
                 F    [nx][ny][nz]    = new double [Nneigh];
@@ -460,6 +470,7 @@ inline Domain::Domain(LBMethod TheMethod, CollideMethod TheMethodC,  double Then
                 BForce[nx][ny][nz] = 0.0, 0.0, 0.0;
                 Gamma[nx][ny][nz] = 0.0;
                 Check[nx][ny][nz] = -1;
+                // CheckRh[nx][ny][nz] = -1;
                 for (size_t nn=0;nn<Nneigh;nn++)
                 {
                     F    [nx][ny][nz][nn] = 0.0;
@@ -536,6 +547,7 @@ inline void Domain::SetZero()
     {
         Gamma[ix][iy][iz] = 0.0;
         Check[ix][iy][iz] = -1;
+        // CheckRh[ix][iy][iz] = -1;
         VelP[ix][iy][iz] = 0.0, 0.0, 0.0;
         Flbm[ix][iy][iz] = 0.0, 0.0, 0.0;
         for(size_t k=0; k<Nneigh; ++k)

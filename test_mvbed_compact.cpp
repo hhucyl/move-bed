@@ -43,7 +43,7 @@ int main (int argc, char **argv) try
     
     std::srand((unsigned)time(NULL));    
     size_t Nproc = 12;
-    size_t h = 800;
+    size_t h = 3200;
     double nu = 0.01;
     int ratio = 1;
     bool initfromfile = false;
@@ -56,13 +56,13 @@ int main (int argc, char **argv) try
         h5name = argv[3];
     }
 
-    size_t nx = h+40;
+    size_t nx = h;
     size_t ny = h/2;
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
     double R = 10;
-    double Ga = 2.4;
+    double Ga = 20.0;
     double rho = 1.0;
     double rhos = 2.0;
     double gy = Ga*Ga*nu*nu/((8*R*R*R)*(rhos/rho-1));
@@ -75,7 +75,7 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.g = -2e-9*ratio;
+    my_dat.g = 2e-9*ratio;
     my_dat.R = R;
     Vec3_t g0(my_dat.g,0.0,0.0);
     std::cout<<"gx = "<<my_dat.g<<std::endl;
@@ -94,25 +94,25 @@ int main (int argc, char **argv) try
     dom.dtdem = 0.01*dt;
     int pnum = 0;
     //fixed
-    for(size_t ip=0; ip<40; ++ip)
+    for(size_t ip=0; ip<160; ++ip)
     {
         // std::cout<<pos<<std::endl;
         dom.Particles.push_back(DEM::Disk(pnum, pos, v, w, rhos, R, dom.dtdem));
         dom.Particles[ip].FixVeloc();
-        dxp = 2.0*R+1,0.0,0.0;
+        dxp = 2.0*R,0.0,0.0;
         pos = pos+dxp;
         pnum++;
     }
     //move
-    for(int ipy=0; ipy<10; ++ipy)
+    for(int ipy=0; ipy<40; ++ipy)
     {
-        pos = R+1,(2*ipy+2)*R+R+1,0.0;
-        for(int ipx=0; ipx<40; ++ipx)
+        pos = R,(2*ipy+2)*R+R,0.0;
+        for(int ipx=0; ipx<160; ++ipx)
         {
             Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1));
             dom.Particles.push_back(DEM::Disk(-pnum, pos+dxr, v, w, rhos, R, dom.dtdem));
             // std::cout<<pos(0)<<" "<<pos(1)<<std::endl;
-            dxp = 2.0*R+1,0.0,0.0;
+            dxp = 2.0*R,0.0,0.0;
             pos = pos+dxp;
             pnum++;
         }   
@@ -157,9 +157,9 @@ int main (int argc, char **argv) try
     }
 
 
-    double Tf = 1e5;
+    double Tf = 1e2;
     
-    double dtout = 1e3;
+    double dtout = 1;
     dom.Box = 0.0,(double) nx-1, 0.0;
     dom.modexy = 0;
     //solving

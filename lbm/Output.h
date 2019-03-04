@@ -194,6 +194,20 @@ void Domain::WriteXDMF(char const * FileKey)
             // }
         }
 
+        double *RWPpos = NULL;
+        int Nrwp = RWParticles.size();
+        if(RWParticles.size()>0)
+        {
+            RWPpos = new double[3*Nrwp];
+            for(size_t i=0; i<RWParticles.size(); ++i)
+            {
+                RW::Particle *RWP = &RWParticles[i];
+                RWPpos[3*i] = RWP->X(0);
+                RWPpos[3*i+1] = RWP->X(1);
+                RWPpos[3*i+2] = RWP->X(2);
+            }
+        }
+
         
         //Writing data to h5 file
         hsize_t dims[1];
@@ -278,6 +292,12 @@ void Domain::WriteXDMF(char const * FileKey)
             // H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPG);    
            
         }
+        if(RWParticles.size())
+        {
+            dims[0] = 3*Nrwp;
+            dsname.Printf("RWPposition");        
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,RWPpos);
+        }
         
         delete [] Density ;
         delete [] Ga   ;
@@ -302,7 +322,10 @@ void Domain::WriteXDMF(char const * FileKey)
             // delete [] PlistPP;
             // delete [] PlistPG;
             delete [] Plist;
-
+        }
+        if(RWParticles.size()>0)
+        {
+            delete [] RWPpos;
         }
     }
 

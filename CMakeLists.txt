@@ -31,6 +31,9 @@ SET(PROGS
     test_periodic1
     test_periodic2
     test_mvbed
+    test_mvbed_compact
+    test_mvbedrw
+    test_particle_reflect
 )
 
 FOREACH(var ${PROGS})

@@ -10,26 +10,7 @@ struct myUserData
     double rhos;
 };
 
-void Report(LBM::Domain &dom, void *UD)
-{
-    myUserData &dat = (*static_cast<myUserData *> (UD));
-    // size_t nx = dom.Ndim(0);
-    // size_t ny = dom.Ndim(1);
-    // size_t nz = dom.Ndim(2);
-    // double dx = dom.dx;
-    if(dom.Time <1e-6)
-    {
-        String fs;
-        fs.Printf("%s.out","mvbed");
-        
-        dat.oss_ss.open(fs.CStr(),std::ios::out);
-        dat.oss_ss<<Util::_10_6<<"Time"<<Util::_8s<<"Collision"<<Util::_8s<<"GhostNum\n";
-    }else{
-        
-        dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<dom.ListofContacts.size()<<Util::_8s<<dom.GhostParticles[0].Ghost<<std::endl;
-        
-    }
-}
+
 
 
 double random(double a, double b)
@@ -43,9 +24,9 @@ int main (int argc, char **argv) try
     
     std::srand((unsigned)time(NULL));    
     size_t Nproc = 12;
-    size_t h = 800;
+    size_t h = 3200;
     double nu = 0.01;
-    int ratio = 1;
+    int ratio = 2;
     bool initfromfile = false;
     char *h5name = NULL;
     if(argc>=2) Nproc = atoi(argv[1]);
@@ -56,13 +37,13 @@ int main (int argc, char **argv) try
         h5name = argv[3];
     }
 
-    size_t nx = h+40;
+    size_t nx = h;
     size_t ny = h/2;
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
     double R = 10;
-    double Ga = 2.4;
+    double Ga = 20.0;
     double rho = 1.0;
     double rhos = 2.0;
     double gy = Ga*Ga*nu*nu/((8*R*R*R)*(rhos/rho-1));
@@ -86,7 +67,7 @@ int main (int argc, char **argv) try
     my_dat.rhos = rhos;
     
     
-    Vec3_t pos(R+1,R,0.0);
+    Vec3_t pos(R,R,0.0);
     Vec3_t dxp(0.0,0.0,0.0);
     Vec3_t v(0.0,0.0,0.0);
     Vec3_t w(0.0,0.0,0.0);
@@ -94,25 +75,25 @@ int main (int argc, char **argv) try
     dom.dtdem = 0.01*dt;
     int pnum = 0;
     //fixed
-    for(size_t ip=0; ip<40; ++ip)
+    for(size_t ip=0; ip<160; ++ip)
     {
         // std::cout<<pos<<std::endl;
         dom.Particles.push_back(DEM::Disk(pnum, pos, v, w, rhos, R, dom.dtdem));
         dom.Particles[ip].FixVeloc();
-        dxp = 2.0*R+1,0.0,0.0;
+        dxp = 2.0*R,0.0,0.0;
         pos = pos+dxp;
         pnum++;
     }
     //move
-    for(int ipy=0; ipy<10; ++ipy)
+    for(int ipy=0; ipy<40; ++ipy)
     {
-        pos = R+1,(2*ipy+2)*R+R+1,0.0;
-        for(int ipx=0; ipx<40; ++ipx)
+        pos = R,(2*ipy+2)*R+R,0.0;
+        for(int ipx=0; ipx<160; ++ipx)
         {
             Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1));
             dom.Particles.push_back(DEM::Disk(-pnum, pos+dxr, v, w, rhos, R, dom.dtdem));
             // std::cout<<pos(0)<<" "<<pos(1)<<std::endl;
-            dxp = 2.0*R+1,0.0,0.0;
+            dxp = 2.0*R,0.0,0.0;
             pos = pos+dxp;
             pnum++;
         }   
@@ -133,6 +114,7 @@ int main (int argc, char **argv) try
         // dom.Particles[ip].FixVeloc();
 
     }
+
     
     for(size_t ix=0; ix<nx; ix++)
     {
@@ -147,23 +129,32 @@ int main (int argc, char **argv) try
 
     Vec3_t v0(0.0,0.0,0.0);
     dom.IsF = true;
-    if(initfromfile)
+  
+    dom.InitialFromH5("test_mvbed_2_0523.h5",g0);
+    
+
+        //dom.Initial(rho,v0,g0);
+    for(int i=0;i<nx-1;++i)
     {
-        dom.InitialFromH5(h5name,g0);
-
-    }else{
-        dom.Initial(rho,v0,g0);
-
+        Vec3_t xt(0.5+i,189.5,0);
+        int ix = std::round(xt(0));
+        int iy = std::round(xt(1));
+        // std::cout<<ix<<" "<<iy<<" "<<dom.Gamma[ix][iy][0]<<std::endl;
+        if(dom.Gamma[ix][iy][0]<1e-9)
+        {
+            dom.RWParticles.push_back(RW::Particle(xt));
+        }
     }
+    // std::cout<<"Checking Inside"<<std::endl;
+    // dom.CheckInside();
 
-
-    double Tf = 1e5;
+    double Tf = 1e6;
     
     double dtout = 1e3;
     dom.Box = 0.0,(double) nx-1, 0.0;
     dom.modexy = 0;
     //solving
-    dom.Solve( Tf, dtout, "test_mvbed_3", NULL, NULL);
+    dom.SolveRW( Tf, dtout, "test_mvbedrw_1", NULL, NULL);
     
     return 0;
 }MECHSYS_CATCH

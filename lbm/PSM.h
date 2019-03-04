@@ -144,7 +144,7 @@ inline void Domain::adddiskG_sub(DEM::Disk *Pa)
         // std::cout<<ix<<" "<<iy<<" "<<iz<<" "<<gamma<<std::endl;
                 
         Gamma[ix][iy][0] = std::min(gamma+Gamma[ix][iy][0],1.0);
-        
+        // CheckRh[ix][iy][0] = ip;
         //cell->Gamma   = std::max(gamma,cell->Gamma);
         //cell->Gamma   = std::min(gamma+cell->Gamma,1.0);
         //if (fabs(cell->Gamma-1.0)<1.0e-12)

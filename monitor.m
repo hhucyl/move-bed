@@ -1,13 +1,13 @@
 clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
-prefix = '/media/pzhang/My Book/move-bed-tmp/-3_slow/';
+prefix = '/media/pzhang/My Book/move-bed-tmp/move_bed_8/';
 for iiii = 1:4
-if(iiii==1)
-    middle = 'test_mvbed_';
-else
+% if(iiii==1)
+%     middle = 'test_mvbed_';
+% else
     middle = strcat('test_mvbed_',num2str(iiii-1),'_');
-end
+% end
 R = 10;
 LP = 40;
 num = 1:999;

@@ -53,7 +53,9 @@ inline void Domain::InitialFromH5(char const * TheFileKey, Vec3_t &g0)
     std::cout<<"Initializing From "<<fn.CStr()<<std::endl;
     hid_t file_id = H5Fopen(fn.CStr(),H5F_ACC_RDONLY,H5P_DEFAULT);
     double *Ff = new double[Nneigh*Ndim(0)*Ndim(1)*Ndim(2)];
+    double *Ga = new double[Ndim(0)*Ndim(1)*Ndim(2)];
     H5LTread_dataset_double(file_id,"/F_0",Ff);
+    H5LTread_dataset_double(file_id,"/Gamma",Ga);
     size_t nn=0;
 	//fluid
     for (size_t iz=0; iz<Ndim(2); ++iz)
@@ -64,6 +66,7 @@ inline void Domain::InitialFromH5(char const * TheFileKey, Vec3_t &g0)
         Vel   [ix][iy][iz] = OrthoSys::O;
         Rho   [ix][iy][iz] = 0.0;
         BForce[ix][iy][iz] = g0;
+        Gamma [ix][iy][iz] = Ga[nn];
 		for(size_t k=0; k<Nneigh; k++)
 		{
 			
