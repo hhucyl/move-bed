@@ -45,11 +45,11 @@ int main (int argc, char **argv) try
     size_t Nproc = 12;
     size_t h = 3200;
     double nu = 0.01;
-    int ratio = 1;
+    double ratio = 0.5;
     bool initfromfile = false;
     char *h5name = NULL;
     if(argc>=2) Nproc = atoi(argv[1]);
-    if(argc>=3) ratio = atoi(argv[2]);
+    if(argc>=3) ratio = atof(argv[2]);
     if(argc>=4)
     {
         initfromfile = true;
@@ -75,7 +75,7 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.g = 2e-9*ratio;
+    my_dat.g = gy*ratio;
     my_dat.R = R;
     Vec3_t g0(my_dat.g,0.0,0.0);
     std::cout<<"gx = "<<my_dat.g<<std::endl;
