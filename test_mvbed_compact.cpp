@@ -56,13 +56,13 @@ int main (int argc, char **argv) try
         h5name = argv[3];
     }
 
-    size_t nx = h;
+    size_t nx = h+48+1;
     size_t ny = h/2;
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
     double R = 10;
-    double Ga = 20.0;
+    double Ga = 10.0;
     double rho = 1.0;
     double rhos = 2.0;
     double gy = Ga*Ga*nu*nu/((8*R*R*R)*(rhos/rho-1));
@@ -75,7 +75,7 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.g = gy*ratio;
+    my_dat.g = -gy*ratio;
     my_dat.R = R;
     Vec3_t g0(my_dat.g,0.0,0.0);
     std::cout<<"gx = "<<my_dat.g<<std::endl;
@@ -85,8 +85,8 @@ int main (int argc, char **argv) try
     
     my_dat.rhos = rhos;
     
-    
-    Vec3_t pos(R+1,R,0.0);
+    double gap = 0.3;
+    Vec3_t pos(R+gap,R,0.0);
     Vec3_t dxp(0.0,0.0,0.0);
     Vec3_t v(0.0,0.0,0.0);
     Vec3_t w(0.0,0.0,0.0);
@@ -99,20 +99,21 @@ int main (int argc, char **argv) try
         // std::cout<<pos<<std::endl;
         dom.Particles.push_back(DEM::Disk(pnum, pos, v, w, rhos, R, dom.dtdem));
         dom.Particles[ip].FixVeloc();
-        dxp = 2.0*R,0.0,0.0;
+        dxp = 2.0*R+gap,0.0,0.0;
         pos = pos+dxp;
         pnum++;
     }
     //move
     for(int ipy=0; ipy<40; ++ipy)
     {
-        pos = R,(2*ipy+2)*R+R,0.0;
+        pos = R+gap,(2*ipy+3)*R+gap,0.0;
         for(int ipx=0; ipx<160; ++ipx)
         {
-            Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1));
+            Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1),0.0);
+            //Vec3_t dxr(0.0,0.0,0.0);
             dom.Particles.push_back(DEM::Disk(-pnum, pos+dxr, v, w, rhos, R, dom.dtdem));
             // std::cout<<pos(0)<<" "<<pos(1)<<std::endl;
-            dxp = 2.0*R,0.0,0.0;
+            dxp = 2.0*R+gap,0.0,0.0;
             pos = pos+dxp;
             pnum++;
         }   
@@ -157,13 +158,13 @@ int main (int argc, char **argv) try
     }
 
 
-    double Tf = 1e2;
+    double Tf = 3;
     
     double dtout = 1;
     dom.Box = 0.0,(double) nx-1, 0.0;
     dom.modexy = 0;
     //solving
-    dom.Solve( Tf, dtout, "test_mvbed_3", NULL, NULL);
+    dom.Solve( Tf, dtout, "test_mvbed_c", NULL, NULL);
     
     return 0;
 }MECHSYS_CATCH

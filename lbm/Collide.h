@@ -133,26 +133,32 @@ inline void Domain::CollideMRT()
             // }
             double Bn = (Gamma[ix][iy][iz]*(Tau-0.5))/((1.0-Gamma[ix][iy][iz])+(Tau-0.5));
             //Bn = Gamma[ix][iy][iz];
-            for (size_t k=0; k<Nneigh; k++)
+            bool valid = true;
+            double alphal = 1.0, alphat = 1.0;
+            size_t num = 0;
+            while (valid)
             {
-                double ForceTerm = dt*3.0*W[k]*dot(BForce[ix][iy][iz],C[k]);
-                // Vec3_t BFt(0.0, 0.0, 0.0);
-                // BFt = 3.0*(C[k] - vel)/(Cs*Cs) + 9.0*dot(C[k],vel)/(Cs*Cs*Cs*Cs)*C[k]; 
-                // double ForceTerm = dt*(1 - 1.0/(2.0*Tau))*W[k]*dot(BFt,BForce[ix][iy][iz]); 
-                // Ftemp[ix][iy][iz][k] = F[ix][iy][iz][k]-fneq[k]+ForceTerm;
-                Ftemp[ix][iy][iz][k] = F[ix][iy][iz][k] - (1-Bn)*fneq[k] + Bn*Omeis[ix][iy][iz][k] + ForceTerm;
-                if(Ftemp[ix][iy][iz][k]<0) Ftemp[ix][iy][iz][k] = 0.0;
+                num++;
+                alphal = alphat;
+                valid = false;
+                for (size_t k=0; k<Nneigh; k++)
+                {
+                    double ForceTerm = dt*3.0*W[k]*dot(BForce[ix][iy][iz],C[k]);
+                    // Vec3_t BFt(0.0, 0.0, 0.0);
+                    // BFt = 3.0*(C[k] - vel)/(Cs*Cs) + 9.0*dot(C[k],vel)/(Cs*Cs*Cs*Cs)*C[k]; 
+                    // double ForceTerm = dt*(1 - 1.0/(2.0*Tau))*W[k]*dot(BFt,BForce[ix][iy][iz]); 
+                    // Ftemp[ix][iy][iz][k] = F[ix][iy][iz][k]-fneq[k]+ForceTerm;
+                    double Noneq = (1-Bn)*fneq[k] - Bn*Omeis[ix][iy][iz][k] - ForceTerm;
+                    Ftemp[ix][iy][iz][k] = F[ix][iy][iz][k] - alphal*Noneq;
+                    if(Ftemp[ix][iy][iz][k]<-1.0e12) 
+                    {
+                        valid = true;
+                        double temp = std::fabs(F[ix][iy][iz][k]/Noneq);
+                        if(temp<alphat) alphat = temp;
+                        Ftemp[ix][iy][iz][k] = 0.0;
+                    }
 
-                // if(Ftemp[ix][iy][iz][k]<0)
-                // {
-                    // std::cout<<ix<<" "<<iy<<" "<<iz<<std::endl;
-                    // throw new Fatal("Negative distribution function value!!!!!");   
-                // }
-                // if(ix == 1 &&iy==10&&iz ==0)
-                // {
-                //     std::cout<<"F "<<k<<"="<<F[ix][iy][iz][k]<<std::endl;
-                //     std::cout<<"Ft "<<k<<"="<<Ftemp[ix][iy][iz][k]<<std::endl;
-                // }
+                }
             }
 
             //bool valid = true;
