@@ -150,12 +150,11 @@ inline void Domain::CollideMRT()
                     // Ftemp[ix][iy][iz][k] = F[ix][iy][iz][k]-fneq[k]+ForceTerm;
                     double Noneq = (1-Bn)*fneq[k] - Bn*Omeis[ix][iy][iz][k] - ForceTerm;
                     Ftemp[ix][iy][iz][k] = F[ix][iy][iz][k] - alphal*Noneq;
-                    if(Ftemp[ix][iy][iz][k]<-1.0e12) 
+                    if(Ftemp[ix][iy][iz][k]<-1.0e12&&num<2) 
                     {
-                        valid = true;
                         double temp = std::fabs(F[ix][iy][iz][k]/Noneq);
                         if(temp<alphat) alphat = temp;
-                        Ftemp[ix][iy][iz][k] = 0.0;
+                        valid = true;
                     }
 
                 }
@@ -482,8 +481,8 @@ inline void Domain::CollideMRTIBM()
             double tau = Tau;
             double rho = Rho[ix][iy][iz];
             Vec3_t bf = Flbm[ix][iy][iz];
-            // Vec3_t vel = Vel[ix][iy][iz] + 0.5*bf/rho*dt;
-            Vec3_t vel = Vel[ix][iy][iz];
+            Vec3_t vel = Vel[ix][iy][iz] + 0.5*bf/rho*dt;
+            // Vec3_t vel = Vel[ix][iy][iz];
             double *f = F[ix][iy][iz];
             double *m = Ftemp[ix][iy][iz];
             double fneq[Nneigh];

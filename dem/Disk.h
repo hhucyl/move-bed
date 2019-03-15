@@ -59,7 +59,9 @@ public:
     double Eta;            ///< Plastic moment coefficient
     bVec3_t vf;            ///< prescribed velocities
     bVec3_t wf;            ///< prescribed angular velocities
-    
+
+   
+
 };
 
 inline Disk::Disk(int TheTag, Vec3_t const & TheX, Vec3_t const & TheV, Vec3_t const & TheW, double Therho, double TheR, double dt)
@@ -122,6 +124,7 @@ inline void Disk::Periodic(int modexy, Vec3_t &Box)
             double distb = Xb(modexy)-Box(1);
             X(modexy) = Box(0) - dist2;
             Xb(modexy) = Box(0) + distb;
+
         }
         
 }

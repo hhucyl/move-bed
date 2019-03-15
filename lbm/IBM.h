@@ -304,12 +304,126 @@ inline void Domain::ApplyIBM3DIM(Vec3_t &pos, double R, size_t IT)
 }
     
 
+inline void Domain::adddiskIBM_sub(DEM::Disk *Pa)
+{
+    size_t nx = Ndim(0);
+    size_t ny = Ndim(1);
+    // size_t nz = Ndim(2);
+    int N = std::ceil(2.0*M_PI*Pa->Rh/dx);
+    double alpha = 2*M_PI/((double) N);
+    double dS = 2.0*M_PI*Pa->Rh*dx/N;
+    Vec3_t points[N];
+    Vec3_t VelIBM[N];
+    Vec3_t FIBM[N];
+    for(int im=0; im<N; im++)
+    {
+        Vec3_t r(Pa->Rh*std::cos(im*alpha)+Pa->X(0),Pa->Rh*std::sin(im*alpha)+Pa->X(1),0.0);
+        points[im] = r;
+        int ixs = std::max(std::floor(r(0) - 3*dx),0.0);
+        int ixe = std::min(std::ceil(r(0) + 3*dx),(double) nx);
+        int iys = std::max(std::floor(r(1) - 3*dx),0.0);
+        int iye = std::min(std::ceil(r(1) + 3*dx),(double) ny);
+        VelIBM[im] = 0.0,0.0,0.0;
+        for(int ix= ixs; ix<ixe; ix++)
+        for(int iy= iys; iy<iye; iy++)
+        {
+            VelIBM[im] += Vel[ix][iy][0]*KernelIBM(r(0),ix)*KernelIBM(r(1),iy); 
+        }
+        Vec3_t tmp;
+        Rotation(Pa->W,Pa->Q,tmp);     
+        Vec3_t VelPt   = Pa->V + cross(tmp,r);
+        Vec3_t FIBMt = -(VelPt-VelIBM[im])/dt*dS;
+        FIBM[im] = -FIBMt;
+        Vec3_t T,Tt;
+        Vec3_t B = r-Pa->X;
+        Tt =           cross(B,FIBMt);
+        Quaternion_t q;
+        Conjugate    (Pa->Q,q);
+        Rotation     (Tt,q,T);
+            //std::cout << "1" << std::endl;
+    #ifdef USE_OMP
+        omp_set_lock      (&Pa->lck);
+    #endif
+        Pa->Fh          += FIBMt;
+        Pa->Th          += T;
+    #ifdef USE_OMP
+        omp_unset_lock    (&Pa->lck);
+    #endif
+        
+    }
+    int ixs = std::max(std::floor(Pa->X(0) - (Pa->Rh+3)*dx),0.0);
+    int ixe = std::min(std::ceil(Pa->X(0) + (Pa->Rh+3)*dx),(double) nx);
+    int iys = std::max(std::floor(Pa->X(1) - (Pa->Rh+3)*dx),0.0);
+    int iye = std::min(std::ceil(Pa->X(1) + (Pa->Rh+3)*dx),(double) ny);
+    
+    for(int ix= ixs; ix<ixe; ix++)
+    for(int iy= iys; iy<iye; iy++)
+    {
+        
+        
+        Flbm[ix][iy][0] = 0.0,0.0,0.0;
+        for(int im=0; im<N; im++)
+        {
+            Vec3_t r = points[im];
+            // Vec3_t FIBM = 2.0*Rho[ix][iy][0]*(VelPt-VelIBM[im])/dt;
+            Flbm[ix][iy][0] += 2.0*Rho[ix][iy][0]*FIBM[im]*KernelIBM(r(0),ix)*KernelIBM(r(1),iy)/(dx*dx)*dS; 
+        }
+        
+       
+    }
+    
+}
 
 
 
 
 
+inline void Domain::AddDisksIBM()
+{
+    // if(Time<0.5) std::cout<<"--- "<<"PSM"<<" ---"<<std::endl;    
+    // std::cout<<1<<std::endl;
+    #ifdef USE_OMP
+    #pragma omp parallel for schedule(static) num_threads(Nproc)
+    #endif
+    for(size_t ip=0; ip<Particles.size(); ++ip)
+    {
+        Particles[ip].Fh = 0.0,0.0,0.0;
+        Particles[ip].Th = 0.0,0.0,0.0;
+        adddiskIBM_sub(&Particles[ip]);
+        // std::cout<<ip<<std::endl;
+        
+    }
+    // std::cout<<2<<std::endl;
 
+    #ifdef USE_OMP
+    #pragma omp parallel for schedule(static) num_threads(Nproc)
+    #endif
+    for(size_t ip=0; ip<GhostParticles.size(); ++ip)
+    {
+        DEM::Disk *Pa = &GhostParticles[ip];
+        Pa->Fh = 0.0,0.0,0.0;
+        Pa->Th = 0.0,0.0,0.0;
+        if(!Pa->Ghost) continue;
+        // std::cout<<ip<<std::endl;
+        adddiskIBM_sub(&GhostParticles[ip]);
+        
+    }
+    // std::cout<<3<<std::endl;
+
+    
+    #ifdef USE_OMP
+    #pragma omp parallel for schedule(static) num_threads(Nproc)
+    #endif
+    for(size_t ip=0; ip<Particles.size(); ++ip)
+    {
+        DEM::Disk *Pa = &Particles[ip];
+        DEM::Disk *Pa_ghost = &GhostParticles[ip];
+        if(!Pa_ghost->Ghost) continue;
+        Pa->Fh += Pa_ghost->Fh;
+        Pa->Th += Pa_ghost->Th;
+    }
+    
+}
 
 
 

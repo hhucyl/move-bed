@@ -21,7 +21,7 @@ void Report(LBM::Domain &dom, void *UD)
     if(dom.Time <1e-6)
     {
         String fs;
-        fs.Printf("%s.out","settling1");
+        fs.Printf("%s.out","settling2");
         // fs.Printf("%s_%d_%d_%g.out","Permeability",dat.bbtype,nx,dom.Tau);
         
         dat.oss_ss.open(fs.CStr(),std::ios::out);
@@ -35,7 +35,7 @@ void Report(LBM::Domain &dom, void *UD)
             F+=dom.Flbm[ix][iy][0](1);
         }
         F = -F;
-        double Cd = 2*F/(dom.Particles[0].V(1)*dom.Particles[0].V(1)*2*dom.Particles[0].R);
+        double Cd = 2*(-dom.Particles[0].F(1)+dom.Particles[0].Ff(1))/(dom.Particles[0].V(1)*dom.Particles[0].V(1)*2*dom.Particles[0].R);
         double Re = 2*dom.Particles[0].R*dom.Particles[0].V(1)/dat.nu;
         dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<dom.Particles[0].V(1)<<Util::_8s<<dom.Particles[0].R<<Util::_8s<<Re<<Util::_8s<<Cd<<Util::_8s<<F<<Util::_8s<<dom.Particles[0].F(1)-dom.Particles[0].Ff(1)<<std::endl;
         
@@ -76,7 +76,7 @@ int main (int argc, char **argv) try
     if(argc>=2) Nproc = atoi(argv[1]); 
 
     size_t nx = h;
-    size_t ny = h;
+    size_t ny = h*2;
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
@@ -88,7 +88,7 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.g = 2e-4;
+    my_dat.g = 2.0e-4;
     my_dat.R = R;
     Vec3_t g0(0.0,0.0,0.0);
     dom.Nproc = Nproc;       
@@ -136,13 +136,13 @@ int main (int argc, char **argv) try
     }
 
     dom.Initial(rho,v0,g0);
-    double Tf = 1e5;
+    double Tf = 1e6;
     
-    double dtout = 1e2;
+    double dtout = 1e3;
     dom.Box = 0, ny-1, 0;
-    dom.modexy = 1;
+    dom.modexy = 0;
     //solving
-    dom.Solve( Tf, dtout, "test_move1", NULL, Report);
+    dom.SolveIBM( Tf, dtout, "test_move1", NULL, Report);
     
     return 0;
 }MECHSYS_CATCH

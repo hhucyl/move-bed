@@ -174,6 +174,8 @@ public:
     void AddDisksG();
     void adddiskG_sub(DEM::Disk *Pa);
     void AddSphereG(Vec3_t &pos, double R);
+    void AddDisksIBM();
+    void adddiskIBM_sub(DEM::Disk *Pa);
     void CalcForceQ();
     void SetZero();
     void StartSolve();
@@ -191,6 +193,7 @@ public:
 
 
     void Solve(double Tf, double dtout, char const * TheFileKey, ptDFun_t ptSetup, ptDFun_t ptReport);
+    void SolveIBM(double Tf, double dtout, char const * TheFileKey, ptDFun_t ptSetup, ptDFun_t ptReport);
     void SolveRW(double Tf, double dtout, char const * TheFileKey, ptDFun_t ptSetup, ptDFun_t ptReport);
     void rwsolve_sub(double dt);
     void CheckInside();
