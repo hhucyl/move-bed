@@ -176,6 +176,9 @@ public:
     void AddSphereG(Vec3_t &pos, double R);
     void AddDisksIBM();
     void adddiskIBM_sub(DEM::Disk *Pa);
+    void adddiskIBM_sub_periodic(DEM::Disk *Pa, DEM::Disk *GPa);
+    void FindNeighNodes(Vec3_t &r, Vec3_t &gr, int depth, std::vector<std::pair<int,int>> &NodeList, std::vector<bool> &NodeType);
+
     void CalcForceQ();
     void SetZero();
     void StartSolve();

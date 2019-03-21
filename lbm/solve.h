@@ -125,6 +125,7 @@ inline void Domain::SolveIBM(double Tf, double dtout, char const * TheFileKey, p
             GhostParticles.assign(Particles.begin(), Particles.end()); 
         
             GhostPeriodic();
+            
         
          
             //set fluid force
@@ -141,6 +142,9 @@ inline void Domain::SolveIBM(double Tf, double dtout, char const * TheFileKey, p
         
             //move
             MoveParticles();
+            // GhostParticles.clear();
+            // GhostParticles.assign(Particles.begin(), Particles.end());
+            // GhostPeriodic(); 
         }
         
 

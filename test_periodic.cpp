@@ -99,7 +99,8 @@ int main (int argc, char **argv) try
     my_dat.rhos = rhos;
     Vec3_t v0(0.0,0.0,0.0);
     
-    Vec3_t pos(R+1,0.5*ny,0.0);
+    // Vec3_t pos(nx-1-(2*R+0.1),0.5*ny+0.1,0.0);
+    Vec3_t pos(0.5*nx+0.1,ny-1-(R+0.1),0.0);
     // Vec3_t pos(nx*0.5,ny-1-3.0*R,0.0);
     // Vec3_t pos1(nx*0.5,2.5*R,0.0);
     Vec3_t dxp(2*R+1,0.0,0.0);
@@ -107,7 +108,7 @@ int main (int argc, char **argv) try
     Vec3_t v1(0.0,0.0,0.0);
     Vec3_t w(0.0,0.0,0.0);
     //DEM
-    for(size_t ip=0; ip<5; ++ip)
+    for(size_t ip=0; ip<1; ++ip)
     {
         // std::cout<<pos<<std::endl;
     // dom.Particles.push_back(DEM::Disk(-1, pos, v, w, rhos, R, dt));
@@ -121,17 +122,19 @@ int main (int argc, char **argv) try
     std::cout<<"Particles number = "<<dom.Particles.size()<<std::endl;
     for(int ip=0; ip<dom.Particles.size(); ++ip)
     {
-        dom.Particles[ip].Ff = M_PI*R*R*rhos*my_dat.g, 0.0 , 0.0;
+        // dom.Particles[ip].Ff =  M_PI*R*R*rhos*my_dat.g, 0.0 , 0.0;
+        dom.Particles[ip].Ff =  0.0, -M_PI*R*R*rhos*my_dat.g , 0.0;
         dom.Particles[ip].Kn = 100;
         dom.Particles[ip].Gn = 0.0;
         dom.Particles[ip].Kt = 0.0;
         dom.Particles[ip].Mu = 0.0;
         dom.Particles[ip].Eta = 0.0;
         dom.Particles[ip].Beta = 0.0;
-        dom.Particles[ip].Rh = 0.8*R;
+        dom.Particles[ip].Rh = R;
         // dom.Particles[ip].FixVeloc();
 
     }
+    
     // for(size_t ix=0; ix<nx; ix++)
     // {
     //     dom.IsSolid[ix][0][0] = true;
@@ -144,16 +147,16 @@ int main (int argc, char **argv) try
     // }
 
     Initial(dom,rho,v0,g0);
-
-    double Tf = 30;
+    // dom.InitialFromH5("test_periodic1_0020.h5",g0);
+    double Tf = 1e4;
     
-    double dtout = 10;
-    char const * TheFileKey = "test_periodic";
-    dom.Box = 0.0, nx-1, 0.0;
-    dom.modexy = 0;
+    double dtout = 1e2;
+    dom.Box = 0.0, ny-1, 0.0;
+    dom.modexy = 1;
     dom.dtdem = dt;
+    dom.IsF = true;
     //solving
-    dom.Solve( Tf, dtout, "test_periodic1", NULL, Report);    
+    dom.SolveIBM( Tf, dtout, "test_periodic1", NULL, Report);    
     
     return 0;
 

@@ -60,7 +60,9 @@ public:
     bVec3_t vf;            ///< prescribed velocities
     bVec3_t wf;            ///< prescribed angular velocities
 
-   
+    // std::vector<bool> NodeType;
+    // std::vector<Vec3_t> points;
+
 
 };
 
@@ -103,18 +105,20 @@ inline Disk::Disk(int TheTag, Vec3_t const & TheX, Vec3_t const & TheV, Vec3_t c
 inline void Disk::Periodic(int modexy, Vec3_t &Box)
 {
     //modexy is to distingusih perodic in xy direction, Box is where the periodic boundary was
-
+    //remember that in periodic 0 is not equal to nx-1. It is actual at the location of nx since the definition of periodic boundary in LBM. This is accounting for + -1 in Periodic as well as Leave. This is perticularly important in IBM Periodic Boundary.
         
-    double dist1 = std::fabs(X(modexy) - Box(0));
-    double dist2 = std::fabs(X(modexy) - Box(1));
-    if(dist1<dist2)
+    // double dist1 = std::fabs(X(modexy) - Box(0));
+    // double dist2 = std::fabs(X(modexy) - Box(1));
+    double dist1 = X(modexy) - Box(0);
+    double dist2 = X(modexy) - Box(1);
+    if(std::fabs(dist1)<std::fabs(dist2))
     {
         if(dist1<2*R)
         {
             Ghost = true;
             double distb = Xb(modexy)-Box(0);
-            X(modexy) = Box(1) + dist1;
-            Xb(modexy) = Box(1) + distb;
+            X(modexy) = Box(1) + dist1 + 1.0;
+            Xb(modexy) = Box(1) + distb + 1.0;
         }
         
     }else{
@@ -122,8 +126,8 @@ inline void Disk::Periodic(int modexy, Vec3_t &Box)
         {
             Ghost = true;
             double distb = Xb(modexy)-Box(1);
-            X(modexy) = Box(0) - dist2;
-            Xb(modexy) = Box(0) + distb;
+            X(modexy) = Box(0) + dist2 - 1.0;
+            Xb(modexy) = Box(0) + distb - 1.0;
 
         }
         
@@ -136,21 +140,29 @@ inline void Disk::Leave(int modexy, Vec3_t &Box)
 {
     if(IsFree())
     {
-        if(1000*X(modexy)<1000*Box(0))
+        if(X(modexy)<(Box(0)-1.5*R))
         {   
-            double dist = std::fabs(X(modexy)-Box(0));
-            X(modexy) = Box(1)-dist;        
+            // double dist = std::fabs(X(modexy)-Box(0));
+            // X(modexy) = Box(1)-dist+1.0;        
+            // double distb = Xb(modexy)-Box(0);
+            // Xb(modexy) = Box(1)+distb+1.0;
+            double dist = X(modexy)-Box(0);
+            X(modexy) = Box(1)+dist+1.0;        
             double distb = Xb(modexy)-Box(0);
-            Xb(modexy) = Box(1)+distb;;
+            Xb(modexy) = Box(1)+distb+1.0;
 
         }
-        if(X(modexy)>Box(1))
+        if(X(modexy)>Box(1)+1.5*R)
         {
-            double dist = std::fabs(X(modexy)-Box(1));
-            X(modexy) = Box(0)+dist;
+            // double dist = std::fabs(X(modexy)-Box(1));
+            // X(modexy) = Box(0)+dist-1.0;
 
+            // double distb = Xb(modexy)-Box(1);
+            // Xb(modexy) = Box(0)+distb-1.0;
+            double dist = X(modexy) - Box(1);
             double distb = Xb(modexy)-Box(1);
-            Xb(modexy) = Box(0)+distb;
+            X(modexy) = Box(0) + dist - 1.0;
+            Xb(modexy) = Box(0) + distb - 1.0;
         }
     }
     

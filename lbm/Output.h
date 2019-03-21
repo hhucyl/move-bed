@@ -106,12 +106,21 @@ void Domain::WriteXDMF(char const * FileKey)
         int *Plist = NULL;
         // int *PlistPP = NULL;
         // int *PlistPG = NULL;
+
+        // double *Ppoints = NULL;
+        // double *PNodeType = NULL;
+        // int *PNodeList = NULL;
+
         int NP = Particles.size()*2;
         int NL = ListofContacts.size()*2;
+
+        // int Npp;
         // int NL = ListofContactsPP.size()*2;
         // int NLG = ListofContactsPG.size()*2;
         if(Particles.size()>0)
         {
+            // Npp = Particles[0].points.size();
+            
             Pposition = new double[3*NP];
             Ppositionb = new double[3*NP];
             PVeloc = new double[3*NP];
@@ -121,6 +130,11 @@ void Domain::WriteXDMF(char const * FileKey)
             PWb = new double[3*NP];
             Ptag = new int[NP];
             Plist = new int[NL];
+
+            
+            // Ppoints = new double[3*NP*Npp];
+            // PNodeType = new double[NP*Npp/2];
+            // PNodeList = new int[NP*Npp];
             // PlistPP = new int[NL];
             // PlistPG = new int[NLG];
             for(size_t ip=0; ip<Particles.size();++ip)
@@ -148,6 +162,23 @@ void Domain::WriteXDMF(char const * FileKey)
                 PForceh[3*ip] = Pa->Fh(0);
                 PForceh[3*ip+1] = Pa->Fh(1);
                 PForceh[3*ip+2] = Pa->Fh(2);
+                
+
+                // for(int ii=0; ii<Npp; ++ii)
+                // {
+                    
+                //     Ppoints[3*ii+3*Npp*ip] = Pa->points[ii](0);
+                //     Ppoints[3*ii+3*Npp*ip+1] = Pa->points[ii](1);
+                //     Ppoints[3*ii+3*Npp*ip+2] = Pa->points[ii](2);
+                    
+                //     if(Time<0.5) continue;
+                //     bool flag_temp = Pa->NodeType[ii];
+                //     PNodeType[ii+Npp*ip] = flag_temp ? 1.0: -1.0;
+                //     // PNodeList[2*ii+2*Npp*ip] = Pa->NodeList[ii].first;
+                //     // PNodeList[2*ii+2*Npp*ip+1] = Pa->NodeList[ii].second;
+                // }
+                
+
             }
             int GN = Particles.size();
             for(int ip=0; ip<(int)GhostParticles.size();++ip)
@@ -176,6 +207,17 @@ void Domain::WriteXDMF(char const * FileKey)
                 PForceh[3*ipp] = Pa->Fh(0);
                 PForceh[3*ipp+1] = Pa->Fh(1);
                 PForceh[3*ipp+2] = Pa->Fh(2);
+
+                // for(int ii=0; ii<Npp; ++ii)
+                // {
+                //     Ppoints[3*ii+3*Npp*ipp] = Pa->points[ii](0);
+                //     Ppoints[3*ii+3*Npp*ipp+1] = Pa->points[ii](1);
+                //     Ppoints[3*ii+3*Npp*ipp+2] = Pa->points[ii](2);
+                    
+
+                    
+                // }
+                
             }
             for(size_t il=0; il<ListofContacts.size(); ++il)
             {
@@ -289,8 +331,17 @@ void Domain::WriteXDMF(char const * FileKey)
             // H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPP);
             // dims[0] = NLG;
             // dsname.Printf("PListPG");        
-            // H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPG);    
-           
+            // H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPG);
+            // dims[0] = 3*NP*Npp;
+            // dsname.Printf("Ppoints");        
+            // H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,Ppoints);
+            // dims[0] = NP*Npp/2;
+            // dsname.Printf("PNodeType");        
+            // H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PNodeType);
+            // dims[0] = NP*Npp;
+            // dsname.Printf("PNodeList");        
+            // H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PNodeList);
+
         }
         if(RWParticles.size())
         {
@@ -322,6 +373,10 @@ void Domain::WriteXDMF(char const * FileKey)
             // delete [] PlistPP;
             // delete [] PlistPG;
             delete [] Plist;
+
+            // delete [] Ppoints;
+            // delete [] PNodeType;
+            // delete [] PNodeList;
         }
         if(RWParticles.size()>0)
         {

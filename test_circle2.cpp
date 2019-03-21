@@ -103,10 +103,11 @@ int main (int argc, char **argv) try
     Vec3_t v0(0.0,0.0,0.0);
     Initial(dom,rho,v0,g0);
     
-    Vec3_t pos(nx*0.5,0.1*ny,0.0);
+    Vec3_t pos(nx*0.5,0.1*ny+0.1,0.0);
     Vec3_t dxp(0.1,5.0*R,0.0);
     Vec3_t v(0.0,0.0,0.0);
     Vec3_t w(0.0,0.0,0.0);
+    dom.dtdem = 1.0*dt;
     for(size_t ip=0; ip<N; ++ip)
     {
         // std::cout<<pos<<std::endl;
@@ -123,7 +124,7 @@ int main (int argc, char **argv) try
         dom.Particles[ip].Mu = 0.0;
         dom.Particles[ip].Eta = 0.0;
         dom.Particles[ip].Beta = 0.0;
-        dom.Particles[ip].Rh = R;
+        dom.Particles[ip].Rh = 0.8*R;
 
     }
     for(size_t ix=0; ix<nx; ix++)
@@ -141,66 +142,9 @@ int main (int argc, char **argv) try
     double Tf = 2e4;
     
     double dtout = 1e2;
-    char const * TheFileKey = "test_2";
+    dom.Box = 0.0, ny-1, 0.0;
+    dom.modexy = 1;
     //solving
-    dom.StartSolve();
-    double tout = 0;
-    dom.dtdem = dt;
-    while(dom.Time<Tf)
-    {
-        if (dom.Time>=tout)
-        {
-            
-            String fn;
-            fn.Printf("%s_%04d", TheFileKey, dom.idx_out);
-            
-            dom.WriteXDMF(fn.CStr());
-            dom.idx_out++;
-            // std::cout<<"--- Time = "<<dom.Time<<" "<<Tf<<" ---"<<std::endl;
-            Report(dom,&my_dat); 
-            tout += dtout;
-        }
-        dom.SetZero();
-        //set added force
-        #pragma omp parallel for schedule(static) num_threads(Nproc)
-        for(size_t i=0;i<dom.Particles.size();i++)
-        {
-            dom.Particles[i].F = dom.Particles[i].Ff;
-            dom.Particles[i].T = dom.Particles[i].Tf;
-        }
-        //set fluid force 
-        dom.AddDisksG();
-        dom.UpdateParticlesContacts();
-        #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
-        for(size_t i=0; i<dom.ListofContacts.size();++i)
-        {
-            int ip1 = dom.ListofContacts[i].first;
-            int ip2 = dom.ListofContacts[i].second;
-            DEM::DiskPair pair(&dom.Particles[ip1],&dom.Particles[ip2]);
-            pair.CalcForce(dom.dtdem);
-            omp_set_lock  (&pair.P1->lck);
-            pair.P1->F += pair.F1;
-            pair.P1->T += pair.T1;
-            omp_unset_lock(&pair.P1->lck);
-            omp_set_lock  (&pair.P2->lck);
-            pair.P2->F += pair.F2;
-            pair.P2->T += pair.T2;
-            omp_unset_lock(&pair.P2->lck);
-        }
-        //move
-        #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
-        for (size_t i=0; i<N; i++)
-        {
-		    dom.Particles[i].Translate(dt);
-		    dom.Particles[i].Rotate(dt);
-        }
-        //collide and streaming
-        (dom.*dom.ptr2collide)();
-        dom.Stream();
-        dom.BounceBack(false);
-        dom.CalcProps();
-        dom.Time += 1;
-    }
-    dom.EndSolve();
-    return 0;
+    dom.SolveIBM( Tf, dtout, "test_2", NULL, NULL);
+    
 }MECHSYS_CATCH
