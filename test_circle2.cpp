@@ -124,7 +124,10 @@ int main (int argc, char **argv) try
         dom.Particles[ip].Mu = 0.0;
         dom.Particles[ip].Eta = 0.0;
         dom.Particles[ip].Beta = 0.0;
-        dom.Particles[ip].Rh = 0.8*R;
+        dom.Particles[ip].Rh = 1.0*R;
+        dom.Particles[ip].nu = nu;
+        dom.Particles[ip].e1 = 1e-3;
+        dom.Particles[ip].eal = 0.125;
 
     }
     for(size_t ix=0; ix<nx; ix++)

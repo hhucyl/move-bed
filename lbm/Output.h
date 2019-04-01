@@ -99,6 +99,7 @@ void Domain::WriteXDMF(char const * FileKey)
         double *Ppositionb = NULL;
         double *PVeloc = NULL;
         double *PForce = NULL;
+        double *PForcelb = NULL;
         double *PForceh = NULL;
         double *PW = NULL;
         double *PWb = NULL;
@@ -125,6 +126,7 @@ void Domain::WriteXDMF(char const * FileKey)
             Ppositionb = new double[3*NP];
             PVeloc = new double[3*NP];
             PForce = new double[3*NP];
+            PForcelb = new double[3*NP];
             PForceh = new double[3*NP];
             PW = new double[3*NP];
             PWb = new double[3*NP];
@@ -159,6 +161,9 @@ void Domain::WriteXDMF(char const * FileKey)
                 PForce[3*ip] = Pa->Fc(0);
                 PForce[3*ip+1] = Pa->Fc(1);
                 PForce[3*ip+2] = Pa->Fc(2);
+                PForcelb[3*ip] = Pa->Flb(0);
+                PForcelb[3*ip+1] = Pa->Flb(1);
+                PForcelb[3*ip+2] = Pa->Flb(2);
                 PForceh[3*ip] = Pa->Fh(0);
                 PForceh[3*ip+1] = Pa->Fh(1);
                 PForceh[3*ip+2] = Pa->Fh(2);
@@ -204,6 +209,9 @@ void Domain::WriteXDMF(char const * FileKey)
                 PForce[3*ipp] = Pa->Fc(0);
                 PForce[3*ipp+1] = Pa->Fc(1);
                 PForce[3*ipp+2] = Pa->Fc(2);
+                PForcelb[3*ipp] = Pa->Flb(0);
+                PForcelb[3*ipp+1] = Pa->Flb(1);
+                PForcelb[3*ipp+2] = Pa->Flb(2);
                 PForceh[3*ipp] = Pa->Fh(0);
                 PForceh[3*ipp+1] = Pa->Fh(1);
                 PForceh[3*ipp+2] = Pa->Fh(2);
@@ -322,6 +330,8 @@ void Domain::WriteXDMF(char const * FileKey)
             H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PWb);    
             dsname.Printf("PForce");        
             H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PForce);
+            dsname.Printf("PForcelb");        
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PForcelb);
             dsname.Printf("PForceh");        
             H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,PForceh);  
             dims[0] = NL;
@@ -367,6 +377,7 @@ void Domain::WriteXDMF(char const * FileKey)
             delete [] Ppositionb;
             delete [] PVeloc;
             delete [] PForce;
+            delete [] PForcelb;
             delete [] PForceh;
             delete [] PW;
             delete [] PWb;

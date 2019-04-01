@@ -39,6 +39,7 @@ public:
     Vec3_t Wb;             ///< angular velocity
     Vec3_t F;              ///< Force
     Vec3_t Fh;             ///< Force From hydraulics
+    Vec3_t Flb;            ///< Force from lubrication
     Vec3_t Fc;             ///< Force From collision
     Vec3_t Ff;             ///< fixed Force
     Vec3_t T;              ///< Torque
@@ -57,6 +58,9 @@ public:
     double Mu;             ///< Friction coefficient
     double Beta;           ///< Rolling stiffness coeffcient
     double Eta;            ///< Plastic moment coefficient
+    double nu;             ///< Water kinetic viscosity the dem in
+    double eal;            ///< For lubrification 
+    double e1;             ///< For lubrification
     bVec3_t vf;            ///< prescribed velocities
     bVec3_t wf;            ///< prescribed angular velocities
 
@@ -81,6 +85,7 @@ inline Disk::Disk(int TheTag, Vec3_t const & TheX, Vec3_t const & TheV, Vec3_t c
     F   = 0.0,0.0,0.0;
     Fh   = 0.0,0.0,0.0;
     Fc   = 0.0,0.0,0.0;
+    Flb   = 0.0,0.0,0.0;
     T   = 0.0,0.0,0.0;
     Ff  = 0.0,0.0,0.0;
     Tf  = 0.0,0.0,0.0;
@@ -91,6 +96,9 @@ inline Disk::Disk(int TheTag, Vec3_t const & TheX, Vec3_t const & TheV, Vec3_t c
     Kn  = 1.0e3;
     Kt  = 5.0e2;
     Mu  = 0.4;
+    nu  = 0.0;
+    eal = 0.0;
+    e1 = 0.0;
     Eta = 1.0;  
     Beta = 0.12; 
     Q    = 1.0,0.0,0.0,0.0;
@@ -173,7 +181,7 @@ inline void Disk::Leave(int modexy, Vec3_t &Box)
 inline void Disk::Translate(double dt)
 {
     //std::cout << F(0) << " " << M << " " << V(0) << std::endl;
-    F = Fh+Fc+Ff;
+    F = Fh+Fc+Ff+Flb;
     // F = Fc+Ff;
     Vec3_t Ft = F;
     if (vf(0)) Ft(0) = 0.0;

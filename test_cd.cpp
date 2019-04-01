@@ -8,40 +8,70 @@ struct myUserData
     double nu;
     double R;
     double rhos;
-    double g;
+    double U;
 };
 
 void Report(LBM::Domain &dom, void *UD)
 {
     myUserData &dat = (*static_cast<myUserData *> (UD));
-    size_t nx = dom.Ndim(0);
-    size_t ny = dom.Ndim(1);
-    size_t nz = dom.Ndim(2);
-    double dx = dom.dx;
+    
     if(dom.Time <1e-6)
     {
         String fs;
-        fs.Printf("%s.out","settling");
+        fs.Printf("%s.out","drag");
         // fs.Printf("%s_%d_%d_%g.out","Permeability",dat.bbtype,nx,dom.Tau);
         
         dat.oss_ss.open(fs.CStr(),std::ios::out);
-        dat.oss_ss<<Util::_10_6<<"Time"<<Util::_8s<<"Vy"<<Util::_8s<<"R"<<Util::_8s<<"Re"<<Util::_8s<<"Cd\n";
+        dat.oss_ss<<Util::_10_6<<"Time"<<Util::_8s<<"Cd"<<Util::_8s<<"Cl\n";
     }else{
-        // double Cd = 8*dom.Particles[0].R*dat.g*(dat.rhos-1.0)/(3.0*dom.Particles[0].V(1)*dom.Particles[0].V(1));
-        // double F = 0;
-        // for(size_t ix=0; ix<nx; ix++)
-        // for(size_t iy=0; iy<ny; iy++)
-        // {
-        //     F+=dom.Flbm[ix][iy][0](1);
-        // }
-        // F = -F;
-        // double Cd = 2*(-dom.Particles[0].F(1)+dom.Particles[0].Ff(1))/(dom.Particles[0].V(1)*dom.Particles[0].V(1)*2*dom.Particles[0].R);
-        double Cd = dom.Particles[0].Fh(1)/(dom.Particles[0].V(1)*dom.Particles[0].V(1)*dom.Particles[0].R);
-        double Re = 2*dom.Particles[0].R*dom.Particles[0].V(1)/dat.nu;
-        dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<dom.Particles[0].V(1)<<Util::_8s<<dom.Particles[0].R<<Util::_8s<<Re<<Util::_8s<<Cd<<std::endl;
+        
+        double Fd = dom.Particles[0].Fh(0);
+        double Fl = dom.Particles[0].Fh(1);
+        double Cd = Fd/(dat.U*dat.U*dat.R);
+        double Cl = Fl/(dat.U*dat.U*dat.R);
+        dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<Cd<<Util::_8s<<Cl<<std::endl;
         
     }
 }
+
+void Setup(LBM::Domain &dom, void *UD)
+{
+    myUserData &dat = (*static_cast<myUserData *> (UD));
+    size_t ny = dom.Ndim(1);
+    size_t nx = dom.Ndim(0);
+    
+    for(size_t iy=0; iy<ny; ++iy)
+    {
+        size_t index = 0;
+        Vec3_t idx(index,iy,0);
+        double *f = dom.F[index][iy][0];
+        double *f1= dom.F[1][iy][0];
+        double rho1 = dom.Rho[1][iy][0];
+        Vec3_t vel1 = dom.Vel[1][iy][0];
+        double L = (double) (ny-1);
+        double yy = (double) iy-0.5;
+        // Vec3_t vel(-4.0*dat.U/(L*L)*yy*(yy-L),0.0,0.0);
+        Vec3_t vel(dat.U,0.0,0.0);
+
+        for(size_t k=0;k<dom.Nneigh; ++k)
+        {
+            f[k] = dom.Feq(k,rho1,vel) + f1[k] - dom.Feq(k,rho1,vel1);
+        }
+        dom.CalcPropsForCell(idx);
+
+        index = nx-1;
+        idx = index,iy,0;
+        f = dom.F[index][iy][0];
+        f1 = dom.F[index-1][iy][0];
+        for(size_t k=0;k<dom.Nneigh; ++k)
+        {
+            f[k] = f1[k];
+        }
+        dom.CalcPropsForCell(idx);
+
+    }
+}
+
 void Initial(LBM::Domain &dom, double rho, Vec3_t &v0,  Vec3_t &g0)
 {
     
@@ -72,16 +102,18 @@ int main (int argc, char **argv) try
     
     
     size_t Nproc = 8;
-    size_t h = 800;
-    double nu = 0.01;
     if(argc>=2) Nproc = atoi(argv[1]); 
 
-    size_t nx = h;
-    size_t ny = h*3;
+    size_t nx = 800;
+    size_t ny = 800;
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
-    double R = 10;
+    double R = 10.0;
+    double Re = 20.0;
+    double U = 0.03;
+    double nu = 2.0*R*(2.0/3.0*U)/Re;
+    std::cout<<"nu =  "<<nu<<std::endl;
     std::cout<<"R = "<<R<<std::endl;
     //nu = 1.0/30.0;
     std::cout<<nx<<" "<<ny<<" "<<nz<<std::endl;
@@ -89,7 +121,7 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.g = 3.0e-4;
+    my_dat.U = U;
     my_dat.R = R;
     Vec3_t g0(0.0,0.0,0.0);
     dom.Nproc = Nproc;       
@@ -102,7 +134,8 @@ int main (int argc, char **argv) try
     my_dat.rhos = rhos;
     Vec3_t v0(0.0,0.0,0.0);
     
-    Vec3_t pos(nx*0.5,3*R,0.0);
+    // Vec3_t pos(300.0,120.0,0.0);
+    Vec3_t pos(0.5*nx,0.5*ny,0.0);
     Vec3_t v(0.0,0.0,0.0);
     Vec3_t w(0.0,0.0,0.0);
     //DEM
@@ -113,7 +146,7 @@ int main (int argc, char **argv) try
     std::cout<<"Particles number = "<<dom.Particles.size()<<std::endl;
     for(size_t ip=0; ip<dom.Particles.size(); ++ip)
     {
-        dom.Particles[ip].Ff = 0.0, M_PI*R*R*rhos*my_dat.g , 0.0;
+        dom.Particles[ip].Ff = 0.0, 0.0 , 0.0;
         // dom.Particles[ip].Ff = 0.0, 0.0 , 0.0;
         dom.Particles[ip].Kn = 100;
         dom.Particles[ip].Gn = 0.0;
@@ -122,28 +155,24 @@ int main (int argc, char **argv) try
         dom.Particles[ip].Eta = 0.0;
         dom.Particles[ip].Beta = 0.0;
         dom.Particles[ip].Rh = 1.0*R;
-        // dom.Particles[ip].FixVeloc();
+        dom.Particles[ip].FixVeloc();
 
     }
-    for(size_t ix=0; ix<nx; ix++)
-    {
-        dom.IsSolid[ix][0][0] = true;
-        dom.IsSolid[ix][ny-1][0] = true;
-    }
-    for(size_t iy=0; iy<ny; iy++)
-    {
-        dom.IsSolid[0][iy][0] = true;
-        dom.IsSolid[nx-1][iy][0] = true;
-    }
+    // for(size_t ix=0; ix<nx; ix++)
+    // {
+    //     dom.IsSolid[ix][0][0] = true;
+    //     dom.IsSolid[ix][ny-1][0] = true;
+    // }
+    
 
     dom.Initial(rho,v0,g0);
     double Tf = 1e6;
     
     double dtout = 1e3;
-    dom.Box = 0, ny-1, 0;
+    dom.Box = 0, nx-1, 0;
     dom.modexy = 0;
     //solving
-    dom.SolveIBM( Tf, dtout, "test_move1", NULL, Report);
+    dom.SolveIBM( Tf, dtout, "test_cd", Setup, Report);
     
     return 0;
 }MECHSYS_CATCH

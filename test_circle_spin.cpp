@@ -11,21 +11,22 @@ struct myUserData
     double rhos;
 };
 
-void inout(LBM::Domain &dom, void *UD)
+void Setup(LBM::Domain &dom, void *UD)
 {
     myUserData &dat = (*static_cast<myUserData *> (UD));
     size_t nx = dom.Ndim(0);
-    size_t ny = dom.Ndim(0);
+    size_t ny = dom.Ndim(1);
     #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
     for(size_t iy=0; iy<ny; ++iy)
     {
         double *f = dom.F[0][iy][0];
         double *f1 = dom.F[1][iy][0];
-        double yy = (double)iy+0.5;
-        double vx = -dat.vb*4.0/(((double) ny)*((double) ny))*yy*(yy-(double)ny);
-        Vec3_t vel(vx,0.0,0.0);
+        double L = (double) (ny-1);
+        double yy = (double) iy-0.5;
+        Vec3_t vel(-4.0*dat.vb/(L*L)*yy*(yy-L),0.0,0.0);
         double rho = dom.Rho[1][iy][0];
         Vec3_t vel1 = dom.Vel[1][iy][0];
+
         for(size_t k=0;k<dom.Nneigh; ++k)
         {
             f[k] = dom.Feq(k,rho,vel) + f1[k] - dom.Feq(k,rho,vel1); 
@@ -33,6 +34,7 @@ void inout(LBM::Domain &dom, void *UD)
         Vec3_t idx(0,iy,0);
         dom.CalcPropsForCell(idx);
     }
+
 
     #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
     for(size_t iy=0; iy<ny; ++iy)
@@ -53,10 +55,7 @@ void inout(LBM::Domain &dom, void *UD)
 void Report(LBM::Domain &dom, void *UD)
 {
     myUserData &dat = (*static_cast<myUserData *> (UD));
-    size_t nx = dom.Ndim(0);
-    size_t ny = dom.Ndim(1);
-    size_t nz = dom.Ndim(2);
-    double dx = dom.dx;
+    
     if(dom.Time <1e-6)
     {
         String fs;
@@ -67,12 +66,7 @@ void Report(LBM::Domain &dom, void *UD)
         dat.oss_ss<<Util::_10_6<<"Time"<<Util::_8s<<"w"<<Util::_8s<<"R"<<Util::_8s<<"Spa"<<Util::_8s<<"Cl\n";
     }else{
         // double Cd = 8*dom.Particles[0].R*dat.g*(dat.rhos-1.0)/(3.0*dom.Particles[0].V(1)*dom.Particles[0].V(1));
-        double F = 0;
-        for(size_t ix=0; ix<nx; ix++)
-        for(size_t iy=0; iy<ny; iy++)
-        {
-            F+=dom.Flbm[ix][iy][0](1);
-        }
+        double F = dom.Particles[0].Fh(1);
         double spa = dat.w*dom.Particles[0].R/dat.vb;
         double Cl = F/(dat.vb*dat.vb*dom.Particles[0].R);
         dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<dom.Particles[0].W(2)<<Util::_8s<<dom.Particles[0].R<<Util::_8s<<spa<<Util::_8s<<Cl<<std::endl;
@@ -112,16 +106,20 @@ int main (int argc, char **argv) try
     size_t h = 100;
     double nu = 0.1;
     int N=1;
-    if(argc>=2) nu = atof(argv[1]);     
-    if(argc>=3) N = atoi(argv[2]);
-    if(argc>=4) Nproc = atoi(argv[3]); 
+    if(argc>=2) Nproc = atoi(argv[1]); 
 
-    size_t nx = h;
+    size_t nx = 2*h;
     size_t ny = h;
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
     double R = 10;
+    double Re = 20.0;
+    double spa = 1.0;
+    double vb = Re*nu/(2.0*R);
+    double ww = spa*vb/R;
+    std::cout<<"vb = "<<vb<<" vmax = "<<1.5*vb<<std::endl;
+    std::cout<<"w = "<<ww<<std::endl;
     std::cout<<"R = "<<R<<std::endl;
     //nu = 1.0/30.0;
     std::cout<<nx<<" "<<ny<<" "<<nz<<std::endl;
@@ -129,8 +127,8 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.w = 2e-4;
-    my_dat.vb = 1e-3;
+    my_dat.w = ww;
+    my_dat.vb = vb;
     my_dat.R = R;
     Vec3_t g0(0.0,0.0,0.0);
     dom.Nproc = Nproc;       
@@ -149,10 +147,25 @@ int main (int argc, char **argv) try
     Vec3_t pos(nx*0.5,ny*0.5,0.0);
     Vec3_t v(0.0,0.0,0.0);
     Vec3_t w(0.0,0.0,my_dat.w);
+    dom.dtdem = dt;
     for(size_t ip=0; ip<N; ++ip)
     {
 
-        dom.Particles.push_back(LBM::Disk(-ip, pos, v, w, rhos, R, dt));
+        dom.Particles.push_back(DEM::Disk(-ip, pos, v, w, rhos, R, dt));
+    }
+    for(size_t ip=0; ip<dom.Particles.size(); ++ip)
+    {
+        // dom.Particles[ip].Ff = 0.0, M_PI*R*R*rhos*my_dat.g , 0.0;
+        dom.Particles[ip].Ff = 0.0, 0.0 , 0.0;
+        dom.Particles[ip].Kn = 100;
+        dom.Particles[ip].Gn = 0.0;
+        dom.Particles[ip].Kt = 0.0;
+        dom.Particles[ip].Mu = 0.0;
+        dom.Particles[ip].Eta = 0.0;
+        dom.Particles[ip].Beta = 0.0;
+        dom.Particles[ip].Rh = 1.0*R;
+        // dom.Particles[ip].FixVeloc();
+
     }
     dom.Particles[0].FixVeloc();
     std::cout<<dom.Particles[0].W(2)<<std::endl;
@@ -162,57 +175,11 @@ int main (int argc, char **argv) try
         dom.IsSolid[ix][ny-1][0] = true;
     }
 
-    double Tf = 1e3;
+    double Tf = 1e5;
     
-    double dtout = 1;
-    char const * TheFileKey = "test_spin";
-    //solving
-    dom.StartSolve();
-    double tout = 0;
-    while(dom.Time<Tf)
-    {
-        if (dom.Time>=tout)
-        {
-            
-            String fn;
-            fn.Printf("%s_%04d", TheFileKey, dom.idx_out);
-            
-            dom.WriteXDMF(fn.CStr());
-            dom.idx_out++;
-            // std::cout<<"--- Time = "<<dom.Time<<" "<<Tf<<" ---"<<std::endl;
-            Report(dom,&my_dat); 
-            tout += dtout;
-        }
-        dom.SetZero();
-        inout(dom,&my_dat);
-        std::cout<<1<<std::endl;
-        //collide and streaming
-        dom.AddDisksG();
-                
-        (dom.*dom.ptr2collide)();
-
-        //set added force
-        #pragma omp parallel for schedule(static) num_threads(Nproc)
-        for(size_t i=0;i<dom.Particles.size();i++)
-        {
-            dom.Particles[i].F = dom.Particles[i].Ff;
-            dom.Particles[i].T = dom.Particles[i].Tf;
-        }
-        //set fluid force 
-        
-        //move
-        #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
-        for (size_t i=0; i<N; i++)
-        {
-		    dom.Particles[i].Translate(dt);
-		    dom.Particles[i].Rotate(dt);
-        }
-
-        dom.Stream();
-        dom.BounceBack(false);
-        dom.CalcProps();
-        dom.Time += 1;
-    }
-    dom.EndSolve();
+    double dtout = 1e2;
+    dom.Box = 0, nx-1, 0;
+    dom.modexy = 0;
+    dom.SolveIBM( Tf, dtout, "test_spin", Setup, Report);
     return 0;
 }MECHSYS_CATCH

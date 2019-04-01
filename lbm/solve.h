@@ -30,6 +30,7 @@ inline void Domain::Solve(double Tf, double dtout, char const * TheFileKey, ptDF
         }
         
 
+        if (ptSetup!=NULL) (*ptSetup) ((*this), UserData); 
         
 
 
@@ -106,6 +107,8 @@ inline void Domain::SolveIBM(double Tf, double dtout, char const * TheFileKey, p
             tout += dtout;
         }
         
+        if (ptSetup!=NULL) (*ptSetup) ((*this), UserData); 
+        
 
         
 
@@ -135,7 +138,7 @@ inline void Domain::SolveIBM(double Tf, double dtout, char const * TheFileKey, p
 
             //update particles contact
             if(flag){
-                UpdateParticlesContacts();
+                UpdateParticlesContactsIBM();
             }
             
             UpdateParticlePairForce();
@@ -245,7 +248,7 @@ inline void Domain::rwsolve_sub(double dt)
     #ifdef USE_OMP
     #pragma omp parallel for schedule(static) num_threads(Nproc)
     #endif
-    for(int i=0;i<RWParticles.size();++i)
+    for(int i=0;i<(int) RWParticles.size();++i)
     {
         RW::Particle *RWP = &RWParticles[i]; 
         int x1 = std::floor(RWP->X(0));

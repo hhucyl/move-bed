@@ -374,7 +374,7 @@ inline void Domain::adddiskIBM_sub(DEM::Disk *Pa)
     
 }
 
-inline void Domain::FindNeighNodes(Vec3_t &r, Vec3_t &gr, int depth, std::vector<std::pair<int,int>> &NodeList, std::vector<bool> &NodeType)
+inline void Domain::FindNeighNodes(Vec3_t &r, Vec3_t &gr, int depth, std::vector<std::pair<int,int>> &NodeList, std::vector<bool> &NodeType, int ip)
 {
     int nx = (int) Ndim(0);
     int ny = (int) Ndim(1);
@@ -400,6 +400,7 @@ inline void Domain::FindNeighNodes(Vec3_t &r, Vec3_t &gr, int depth, std::vector
         node.second = iy;
         NodeList.push_back(node);
         NodeType.push_back(0==0);
+        CheckIBM[ix][iy][0].insert(ip);
     }
 
     for(int ix=ixsg; ix<ixeg; ++ix)
@@ -409,20 +410,23 @@ inline void Domain::FindNeighNodes(Vec3_t &r, Vec3_t &gr, int depth, std::vector
         node.second = iy;
         NodeList.push_back(node);
         NodeType.push_back(0==1);
+        CheckIBM[ix][iy][0].insert(ip);
     }
     
     
 }
 
 
-inline void Domain::adddiskIBM_sub_periodic(DEM::Disk *Pa, DEM::Disk *GPa)
+inline void Domain::adddiskIBM_sub_periodic(DEM::Disk *Pa, DEM::Disk *GPa, int ip)
 {
-    int nx = (int) Ndim(0);
-    int ny = (int) Ndim(1);
+    // int nx = (int) Ndim(0);
+    // int ny = (int) Ndim(1);
     // size_t nz = Ndim(2);
     int N = std::ceil(2.0*M_PI*Pa->Rh/dx);
+    // N = 240;
     double alpha = 2*M_PI/((double) N);
     double dS = 2.0*M_PI*Pa->Rh*dx/N;
+    // dS = 0.785;
     // Vec3_t points[N];
     Vec3_t VelIBM[N];
     Vec3_t FIBM[N];
@@ -437,7 +441,7 @@ inline void Domain::adddiskIBM_sub_periodic(DEM::Disk *Pa, DEM::Disk *GPa)
         VelIBM[im] = 0.0,0.0,0.0;
         std::vector<std::pair<int,int>> NodeList;
         std::vector<bool> NodeType;
-        FindNeighNodes(r, gr, 3, NodeList, NodeType);
+        FindNeighNodes(r, gr, 3, NodeList, NodeType, ip);
         // Pa->NodeType.assign(NodeType.begin(),NodeType.end());
         Vec3_t r_temp(0.0,0.0,0.0);
         for(int i=0; i<(int) NodeList.size(); ++i)
@@ -450,7 +454,7 @@ inline void Domain::adddiskIBM_sub_periodic(DEM::Disk *Pa, DEM::Disk *GPa)
             }else{
                 r_temp = gr;
             }
-            VelIBM[im] += Vel[ix][iy][0]*KernelIBM(r_temp(0),ix)*KernelIBM(r_temp(1),iy); 
+            VelIBM[im] += Vel[ix][iy][0]*KernelIBM1(r_temp(0),ix)*KernelIBM1(r_temp(1),iy); 
         }
         Vec3_t B = r-Pa->X;
         Vec3_t tmp;
@@ -485,7 +489,7 @@ inline void Domain::adddiskIBM_sub_periodic(DEM::Disk *Pa, DEM::Disk *GPa)
             }else{
                 r_temp = gr;
             }
-            Flbm[ix][iy][0] += 2.0*Rho[ix][iy][0]*FIBM[im]*KernelIBM(r_temp(0),ix)*KernelIBM(r_temp(1),iy)/(dx*dx)*dS; 
+            Flbm[ix][iy][0] += 1.0*Rho[ix][iy][0]*FIBM[im]*KernelIBM1(r_temp(0),ix)*KernelIBM1(r_temp(1),iy)/(dx*dx)*dS; 
         }
     }
     
@@ -506,8 +510,10 @@ inline void Domain::AddDisksIBM()
     {
         Particles[ip].Fh = 0.0,0.0,0.0;
         Particles[ip].Th = 0.0,0.0,0.0;
+        GhostParticles[ip].Fh = 0.0,0.0,0.0;
+        GhostParticles[ip].Th = 0.0,0.0,0.0;
         // adddiskIBM_sub(&Particles[ip]);
-        adddiskIBM_sub_periodic(&Particles[ip],&GhostParticles[ip]);
+        adddiskIBM_sub_periodic(&Particles[ip],&GhostParticles[ip],(int) ip);
         // std::cout<<ip<<std::endl;
         
     }

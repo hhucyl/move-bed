@@ -21,6 +21,32 @@ inline void Domain::join_contactlist_sub(std::set<std::pair<int,int>> *myset_pri
     }
 }
 
+inline void Domain::UpdateParticlesContactsIBM()
+{
+    size_t nx = Ndim(0);
+    size_t ny = Ndim(1);
+    ListofContacts.clear();
+    std::set<std::pair<int,int>> myset_private[Nproc];
+    #pragma omp parallel for schedule(static) num_threads(Nproc)
+    for(size_t ix=0; ix<nx; ++ix)
+    for(size_t iy=0; iy<ny; ++iy)
+    {
+        if(CheckIBM[ix][iy][0].size()>0)
+        {
+            std::vector<int> temp;
+            std::copy(CheckIBM[ix][iy][0].begin(),CheckIBM[ix][iy][0].end(),std::back_inserter(temp));
+            for(size_t p1=0; p1<temp.size()-1; ++p1)
+            for(size_t p2=p1+1; p2<temp.size(); ++p2)
+            {
+                std::pair<int,int> temp_pair(std::min(temp[p1],temp[p2]),std::max(temp[p1],temp[p2]));
+                myset_private[omp_get_thread_num()].insert(temp_pair);
+            }
+        }
+    }
+    join_contactlist_sub(myset_private,ListofContacts);
+
+}
+
 inline void Domain::UpdateParticlesContacts()
 {
     size_t nx = Ndim(0);
@@ -35,17 +61,17 @@ inline void Domain::UpdateParticlesContacts()
     {
         DEM::Disk *Pa = &Particles[ip];
         Pa->Fc = 0.0,0.0,0.0;
-        int ixs = std::max(std::floor(Pa->X(0) - Pa->R - 3*dx),0.0);
-        int ixe = std::min(std::ceil(Pa->X(0) + Pa->R + 3*dx),(double) nx);
-        int iys = std::max(std::floor(Pa->X(1) - Pa->R - 3*dx),0.0);
-        int iye = std::min(std::ceil(Pa->X(1) + Pa->R + 3*dx),(double) ny);
+        int ixs = std::max(std::floor(Pa->X(0) - (1+Pa->eal)*Pa->R - 3*dx),0.0);
+        int ixe = std::min(std::ceil(Pa->X(0) + (1+Pa->eal)*Pa->R + 3*dx),(double) nx);
+        int iys = std::max(std::floor(Pa->X(1) - (1+Pa->eal)*Pa->R - 3*dx),0.0);
+        int iye = std::min(std::ceil(Pa->X(1) + (1+Pa->eal)*Pa->R + 3*dx),(double) ny);
         for(int ix=ixs; ix<ixe; ++ix)
         for(int iy=iys; iy<iye; ++iy) 
         {
             double x = (double) ix;
             double y = (double) iy;
             Vec3_t CC(x,y,0);
-            double len = DEM::DiskSquare(Pa->X,CC,Pa->R,dx);
+            double len = DEM::DiskSquare(Pa->X,CC,(1+Pa->eal)*Pa->R,dx);
             if (std::fabs(len)<1.0e-12) continue;
             if(Check[ix][iy][0]<0)
             {
@@ -71,17 +97,17 @@ inline void Domain::UpdateParticlesContacts()
         DEM::Disk *Pa = &GhostParticles[ip];
         Pa->Fc = 0.0,0.0,0.0;
         if(!Pa->Ghost) continue;
-        int ixs = std::max(std::floor(Pa->X(0) - Pa->R - 3*dx),0.0);
-        int ixe = std::min(std::ceil(Pa->X(0) + Pa->R + 3*dx),(double) nx);
-        int iys = std::max(std::floor(Pa->X(1) - Pa->R - 3*dx),0.0);
-        int iye = std::min(std::ceil(Pa->X(1) + Pa->R + 3*dx),(double) ny);
+        int ixs = std::max(std::floor(Pa->X(0) - (1+Pa->eal)*Pa->R - 3*dx),0.0);
+        int ixe = std::min(std::ceil(Pa->X(0) + (1+Pa->eal)*Pa->R + 3*dx),(double) nx);
+        int iys = std::max(std::floor(Pa->X(1) - (1+Pa->eal)*Pa->R - 3*dx),0.0);
+        int iye = std::min(std::ceil(Pa->X(1) + (1+Pa->eal)*Pa->R + 3*dx),(double) ny);
         for(int ix=ixs; ix<ixe; ++ix)
         for(int iy=iys; iy<iye; ++iy) 
         {
             double x = (double) ix;
             double y = (double) iy;
             Vec3_t CC(x,y,0);
-            double len = DEM::DiskSquare(Pa->X,CC,Pa->R,dx);
+            double len = DEM::DiskSquare(Pa->X,CC,(1+Pa->eal)*Pa->R,dx);
             if (std::fabs(len)<1.0e-12) continue;
             if(Check[ix][iy][0]<0)
             {
@@ -106,6 +132,9 @@ inline void Domain::UpdateParticlesContacts()
 
 inline void Domain::update_pair_sub(DEM::DiskPair &pair, DEM::Disk* P1, DEM::Disk* P2)
 {
+    double eal = P1->eal;
+    double RR = 2*P1->R*P2->R/(P1->R+P2->R);
+    double ee = -pair.delta/RR;
     if(pair.delta>0)
     {
         omp_set_lock  (&P1->lck);
@@ -116,6 +145,16 @@ inline void Domain::update_pair_sub(DEM::DiskPair &pair, DEM::Disk* P1, DEM::Dis
             P2->Fc += pair.F2;
             P2->Tc += pair.T2;
         omp_unset_lock(&P2->lck);
+    }else{
+        if(ee<=eal && ee>0)
+        {
+            omp_set_lock  (&P1->lck);
+                P1->Flb += pair.F1;
+            omp_unset_lock(&P1->lck);
+            omp_set_lock  (&P2->lck);
+                P2->Flb += pair.F2;
+            omp_unset_lock(&P2->lck); 
+        }
     }
     
 }
@@ -198,6 +237,7 @@ inline void Domain::LeaveAndForcedForce()
         Particles[i].F = 0.0,0.0,0.0;
         // Particles[i].Fh = 0.0,0.0,0.0;
         Particles[i].Fc = 0.0,0.0,0.0;
+        Particles[i].Flb = 0.0,0.0,0.0;
         Particles[i].T = 0.0,0.0,0.0;
         // Particles[i].Th = 0.0,0.0,0.0;
         Particles[i].Tc = 0.0,0.0,0.0;

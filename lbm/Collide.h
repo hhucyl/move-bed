@@ -481,8 +481,8 @@ inline void Domain::CollideMRTIBM()
             double tau = Tau;
             double rho = Rho[ix][iy][iz];
             Vec3_t bf = Flbm[ix][iy][iz];
-            Vec3_t vel = Vel[ix][iy][iz] + 0.5*bf/rho*dt;
-            // Vec3_t vel = Vel[ix][iy][iz];
+            // Vec3_t vel = Vel[ix][iy][iz] + 0.5*bf/rho*dt;
+            Vec3_t vel = Vel[ix][iy][iz];
             double *f = F[ix][iy][iz];
             double *m = Ftemp[ix][iy][iz];
             double fneq[Nneigh];
@@ -497,11 +497,12 @@ inline void Domain::CollideMRTIBM()
                 
             for (size_t k=0;k<Nneigh;k++)
             {
-                double ForceTerm1 = dt*3.0*W[k]*dot(BForce[ix][iy][iz],C[k]);
-                Vec3_t BFt(0.0, 0.0, 0.0);
-                BFt = 3.0*(C[k] - vel)/(Cs*Cs) + 9.0*dot(C[k],vel)/(Cs*Cs*Cs*Cs)*C[k]; 
-                double ForceTerm = dt*(1 - 1.0/(2.0*tau))*W[k]*dot(BFt,bf); 
-                Ftemp[ix][iy][iz][k] = F[ix][iy][iz][k] - fneq[k]  + ForceTerm + ForceTerm1;
+                double ForceTerm1 = dt*3.0*W[k]*dot(BForce[ix][iy][iz]+bf,C[k]);
+                // Vec3_t BFt(0.0, 0.0, 0.0);
+                // BFt = 3.0*(C[k] - vel)/(Cs*Cs) + 9.0*dot(C[k],vel)/(Cs*Cs*Cs*Cs)*C[k]; 
+                // double ForceTerm = dt*(1 - 1.0/(2.0*tau))*W[k]*dot(BFt,bf); 
+                // Ftemp[ix][iy][iz][k] = F[ix][iy][iz][k] - fneq[k]  + ForceTerm + ForceTerm1;
+                Ftemp[ix][iy][iz][k] = F[ix][iy][iz][k] - fneq[k] + ForceTerm1;
               
             }
         }
