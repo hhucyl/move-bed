@@ -115,7 +115,7 @@ int main (int argc, char **argv) try
     double dt = 1.0;
     double R = 10;
     double Re = 20.0;
-    double spa = 1.0;
+    double spa = 2.0;
     double vb = Re*nu/(2.0*R);
     double ww = spa*vb/R;
     std::cout<<"vb = "<<vb<<" vmax = "<<1.5*vb<<std::endl;

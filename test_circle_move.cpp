@@ -73,7 +73,7 @@ int main (int argc, char **argv) try
     
     size_t Nproc = 8;
     size_t h = 800;
-    double nu = 0.01;
+    double nu = 0.02;
     if(argc>=2) Nproc = atoi(argv[1]); 
 
     size_t nx = h;
@@ -89,7 +89,7 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.g = 3.0e-4;
+    my_dat.g = 1.0e-4;
     my_dat.R = R;
     Vec3_t g0(0.0,0.0,0.0);
     dom.Nproc = Nproc;       
