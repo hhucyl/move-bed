@@ -153,29 +153,29 @@ void DiskPair::CalcForce(double dt)
 
     }else{
         // std::cout<<1<<std::endl;
-        double e1 = P1->e1;
-        double eal = P1->eal;//pay attention to 0.125 this may vary from case to case see Brandle de Motta et al 2014
-        auto lambda = [](double d) {return (0.5/d - 9.0/20.0*std::log(d) - 3.0/56.0*d*std::log(d) + 1.346);};
-        double RR = 2*P1->R*P2->R/(P1->R+P2->R);
-        double ee = -delta/RR;
-        double mu = 1.0*P1->nu;
-        if(ee<e1 && ee>0)
-        {
-            Vec3_t n    = (P1->X - P2->X)/dist;
-            double Ft = std::fabs(-6*M_PI*mu*RR*dot((P1->V-P2->V),n)*(lambda(e1)-lambda(eal)));
-            F1      =  Ft*n;
-            F2      =  -Ft*n; 
-        }else{
-            if(ee<=eal && ee>0)
-            {
-                Vec3_t n    = (P1->X - P2->X)/dist;
+        // double e1 = P1->e1;
+        // double eal = P1->eal;//pay attention to 0.125 this may vary from case to case see Brandle de Motta et al 2014
+        // auto lambda = [](double d) {return (0.5/d - 9.0/20.0*std::log(d) - 3.0/56.0*d*std::log(d) + 1.346);};
+        // double RR = 2*P1->R*P2->R/(P1->R+P2->R);
+        // double ee = -delta/RR;
+        // double mu = 1.0*P1->nu;
+        // if(ee<e1 && ee>0)
+        // {
+        //     Vec3_t n    = (P1->X - P2->X)/dist;
+        //     double Ft = std::fabs(-6*M_PI*mu*RR*dot((P1->V-P2->V),n)*(lambda(e1)-lambda(eal)));
+        //     F1      =  Ft*n;
+        //     F2      =  -Ft*n; 
+        // }else{
+        //     if(ee<=eal && ee>0)
+        //     {
+        //         Vec3_t n    = (P1->X - P2->X)/dist;
                 
-                double Ft = std::fabs(6*M_PI*mu*RR*dot((P1->V-P2->V),n)*(lambda(ee)-lambda(eal)));
-                F1      =  Ft*n;
-                F2      =  -Ft*n; 
-            }
+        //         double Ft = std::fabs(6*M_PI*mu*RR*dot((P1->V-P2->V),n)*(lambda(ee)-lambda(eal)));
+        //         F1      =  Ft*n;
+        //         F2      =  -Ft*n; 
+        //     }
 
-        }
+        // }
     }
 }
 

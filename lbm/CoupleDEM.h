@@ -132,9 +132,9 @@ inline void Domain::UpdateParticlesContacts()
 
 inline void Domain::update_pair_sub(DEM::DiskPair &pair, DEM::Disk* P1, DEM::Disk* P2)
 {
-    double eal = P1->eal;
-    double RR = 2*P1->R*P2->R/(P1->R+P2->R);
-    double ee = -pair.delta/RR;
+    // double eal = P1->eal;
+    // double RR = 2*P1->R*P2->R/(P1->R+P2->R);
+    // double ee = -pair.delta/RR;
     if(pair.delta>0)
     {
         omp_set_lock  (&P1->lck);
@@ -146,15 +146,15 @@ inline void Domain::update_pair_sub(DEM::DiskPair &pair, DEM::Disk* P1, DEM::Dis
             P2->Tc += pair.T2;
         omp_unset_lock(&P2->lck);
     }else{
-        if(ee<=eal && ee>0)
-        {
-            omp_set_lock  (&P1->lck);
-                P1->Flb += pair.F1;
-            omp_unset_lock(&P1->lck);
-            omp_set_lock  (&P2->lck);
-                P2->Flb += pair.F2;
-            omp_unset_lock(&P2->lck); 
-        }
+        // if(ee<=eal && ee>0)
+        // {
+        //     omp_set_lock  (&P1->lck);
+        //         P1->Flb += pair.F1;
+        //     omp_unset_lock(&P1->lck);
+        //     omp_set_lock  (&P2->lck);
+        //         P2->Flb += pair.F2;
+        //     omp_unset_lock(&P2->lck); 
+        // }
     }
     
 }

@@ -1,10 +1,10 @@
 clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
-middle = 'test_2_';
-for i = 121:121
+middle = 'test_mvbed_c_';
+for i = 1:1
 name = strcat(prefix,middle,num2str(i,'%04d'),'.h5');
-pos = h5read(name,'/Pposition');
+pos = h5read(name,'/Ppositionb');
 nx = h5read(name,'/Nx');
 ny = h5read(name,'/Ny');
 Np = numel(pos)/6;
@@ -15,7 +15,7 @@ ptag = h5read(name,'/PTag');
 % pplist = h5read(name,'/PListPP');
 % pglist = h5read(name,'/PListPG');
 plist = h5read(name,'/PList');
-pforce = h5read(name,'/PForcelb');
+pforce = h5read(name,'/PForce');
 Pforce = [pforce(3*(ii-1)+1),pforce(3*(ii-1)+2),pforce(3*(ii-1)+3)];
 num = 0;
 color = {'r','g'};

@@ -43,7 +43,10 @@ int main (int argc, char **argv) try
     
     std::srand((unsigned)time(NULL));    
     size_t Nproc = 12;
-    size_t h = 3200;
+    int Nx = 160;
+    int Ny = 40;
+    size_t Rn = 10;
+    double gap = 0.3;
     double nu = 0.01;
     double ratio = 0.5;
     bool initfromfile = false;
@@ -55,13 +58,14 @@ int main (int argc, char **argv) try
         initfromfile = true;
         h5name = argv[3];
     }
-
-    size_t nx = h+48+1;
-    size_t ny = h/2;
+    int gapn = std::ceil(gap*Nx);
+    std::cout<<"extra gap n "<<gapn<<std::endl;
+    size_t nx = 2*Rn*Nx+gapn;
+    size_t ny = Rn*Nx;
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
-    double R = 10;
+    double R = (double) Rn;
     double Ga = 10.0;
     double rho = 1.0;
     double rhos = 2.0;
@@ -85,7 +89,7 @@ int main (int argc, char **argv) try
     
     my_dat.rhos = rhos;
     
-    double gap = 0.3;
+    
     Vec3_t pos(R+gap,R,0.0);
     Vec3_t dxp(0.0,0.0,0.0);
     Vec3_t v(0.0,0.0,0.0);
@@ -94,7 +98,7 @@ int main (int argc, char **argv) try
     dom.dtdem = 0.01*dt;
     int pnum = 0;
     //fixed
-    for(size_t ip=0; ip<160; ++ip)
+    for(int ip=0; ip<Nx; ++ip)
     {
         // std::cout<<pos<<std::endl;
         dom.Particles.push_back(DEM::Disk(pnum, pos, v, w, rhos, R, dom.dtdem));
@@ -104,13 +108,13 @@ int main (int argc, char **argv) try
         pnum++;
     }
     //move
-    for(int ipy=0; ipy<40; ++ipy)
+    for(int ipy=0; ipy<Ny; ++ipy)
     {
         pos = R+gap,(2*ipy+3)*R+gap,0.0;
-        for(int ipx=0; ipx<160; ++ipx)
+        for(int ipx=0; ipx<Nx; ++ipx)
         {
-            Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1),0.0);
-            //Vec3_t dxr(0.0,0.0,0.0);
+            // Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1),0.0);
+            Vec3_t dxr(0.0,0.0,0.0);
             dom.Particles.push_back(DEM::Disk(-pnum, pos+dxr, v, w, rhos, R, dom.dtdem));
             // std::cout<<pos(0)<<" "<<pos(1)<<std::endl;
             dxp = 2.0*R+gap,0.0,0.0;
@@ -164,7 +168,7 @@ int main (int argc, char **argv) try
     dom.Box = 0.0,(double) nx-1, 0.0;
     dom.modexy = 0;
     //solving
-    dom.Solve( Tf, dtout, "test_mvbed_c", NULL, NULL);
+    dom.SolveIBM( Tf, dtout, "test_mvbed_c", NULL, NULL);
     
     return 0;
 }MECHSYS_CATCH
