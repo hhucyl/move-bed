@@ -23,18 +23,19 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
 INCLUDE(${MECHSYSSANDBOX_SOURCE_DIR}/UseMECHSYS.cmake)
 
 SET(PROGS
-    test_circle_move
-    test_circle_spin
-    test_circle2
-    test_collision
-    test_periodic
-    test_periodic1
-    test_periodic2
+#    test_circle_move
+#    test_circle_spin
+#    test_circle2
+#    test_collision
+#    test_periodic
+#    test_periodic1
+#    test_periodic2
     test_mvbed
     test_mvbed_compact
+    test_mvbed_small
     test_mvbedrw
-    test_particle_reflect
-    test_cd
+#    test_particle_reflect
+#    test_cd
 )
 
 FOREACH(var ${PROGS})
