@@ -1,8 +1,8 @@
 clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
-prefix = '/media/pzhang/My Book/move-bed-tmp/move_bed_8/';
-for iiii = 1:4
+prefix = '/media/pzhang/My Book/move-bed-tmp/move_bed_2/';
+for iiii = 4:4
 % if(iiii==1)
 %     middle = 'test_mvbed_';
 % else

@@ -6,7 +6,7 @@ server="uqyche38@goliath.labs.eait.uq.edu.au"
 server_prefix="~/macondo/0.5r_10.0Ga_0.3gap/"
 IFS=$'\n'
 local_prefix=/media/pzhang/My\ Book/move-bed-tmp/macondo/0.5r_10.0Ga_0.3gap/
-file_prefix="test_mvbed_c_"
+file_prefix="test_mvbed_c_cti4_"
 echo $server_line
 for i in $(seq $1 $2);
 do
