@@ -560,7 +560,7 @@ inline void Domain::SetZero()
     {
         Gamma[ix][iy][iz] = 0.0;
         Check[ix][iy][iz] = -1;
-        CheckIBM[ix][iy][iz].clear();
+        // CheckIBM[ix][iy][iz].clear();
         // CheckRh[ix][iy][iz] = -1;
         VelP[ix][iy][iz] = 0.0, 0.0, 0.0;
         Flbm[ix][iy][iz] = 0.0, 0.0, 0.0;

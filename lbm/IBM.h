@@ -400,7 +400,7 @@ inline void Domain::FindNeighNodes(Vec3_t &r, Vec3_t &gr, int depth, std::vector
         node.second = iy;
         NodeList.push_back(node);
         NodeType.push_back(0==0);
-        CheckIBM[ix][iy][0].insert(ip);
+        // CheckIBM[ix][iy][0].insert(ip);
     }
 
     for(int ix=ixsg; ix<ixeg; ++ix)
@@ -410,7 +410,7 @@ inline void Domain::FindNeighNodes(Vec3_t &r, Vec3_t &gr, int depth, std::vector
         node.second = iy;
         NodeList.push_back(node);
         NodeType.push_back(0==1);
-        CheckIBM[ix][iy][0].insert(ip);
+        // CheckIBM[ix][iy][0].insert(ip);
     }
     
     
@@ -469,14 +469,14 @@ inline void Domain::adddiskIBM_sub_periodic(DEM::Disk *Pa, DEM::Disk *GPa, int i
         Conjugate    (Pa->Q,q);
         Rotation     (Tt,q,T);
             //std::cout << "1" << std::endl;
-    #ifdef USE_OMP
-        omp_set_lock      (&Pa->lck);
-    #endif
+    // #ifdef USE_OMP
+    //     omp_set_lock      (&Pa->lck);
+    // #endif
         Pa->Fh          += FIBMt;
         Pa->Th          += Tt;
-    #ifdef USE_OMP
-        omp_unset_lock    (&Pa->lck);
-    #endif
+    // #ifdef USE_OMP
+    //     omp_unset_lock    (&Pa->lck);
+    // #endif
       
     
         for(int i=0; i<(int) NodeList.size(); ++i)
@@ -489,7 +489,7 @@ inline void Domain::adddiskIBM_sub_periodic(DEM::Disk *Pa, DEM::Disk *GPa, int i
             }else{
                 r_temp = gr;
             }
-            Flbm[ix][iy][0] += 1.0*Rho[ix][iy][0]*FIBM[im]*KernelIBM1(r_temp(0),ix)*KernelIBM1(r_temp(1),iy)/(dx*dx)*dS; 
+            Flbm[ix][iy][0] += 1.0*Rho[ix][iy][0]*FIBM[im]*KernelIBM1(r_temp(0),ix)*KernelIBM1(r_temp(1),iy)/(dx*dx)*dS;//may cause trouble when kernel overlap 
         }
     }
     
