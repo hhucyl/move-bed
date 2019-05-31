@@ -103,7 +103,7 @@ int main (int argc, char **argv) try
     
     for(int ip=0; ip<(int) dom.Particles.size(); ++ip)
     {
-        dom.Particles[ip].Ff = 0.0, -M_PI*R*R*rhos*gy, 0.0;
+        dom.Particles[ip].Ff = 0.0, -M_PI*R*R*(rhos/rho-1)*gy, 0.0;
         dom.Particles[ip].Kn = 5;
         dom.Particles[ip].Gn = 0.8;
         dom.Particles[ip].Kt = 2.5;
