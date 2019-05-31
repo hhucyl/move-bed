@@ -7,7 +7,10 @@ struct myUserData
     double g;
     double nu;
     double R;
+    int Ny;
+    double gap;
     double rhos;
+    Vec3_t g0;
 };
 
 void Report(LBM::Domain &dom, void *UD)
@@ -31,6 +34,50 @@ void Report(LBM::Domain &dom, void *UD)
     }
 }
 
+void Initial(LBM::Domain &dom, void *UD)
+{
+    myUserData &dat = (*static_cast<myUserData *> (UD));
+    size_t nx = dom.Ndim(0);
+    size_t ny = dom.Ndim(1);
+
+    double py = dat.Ny*2*dat.R + (dat.Ny-1)*dat.gap;
+    double H = ((double) ny-1) - py;
+    std::cout<<"max vel "<<dat.g/(2.0*dat.nu)*H*H/4.0<<std::endl;
+    for(size_t ix=0; ix<nx; ++ix)
+    for(size_t iy=0; iy<ny; ++iy)
+    {
+        if(iy<py)
+        {
+            Vec3_t vtemp(0, 0, 0);
+            // Vec3_t vtemp((double) dat.vb, 0, 0);
+            dom.Rho[ix][iy][0] = 1.0;
+            dom.Vel[ix][iy][0] = vtemp;
+            dom.BForce[ix][iy][0] = dat.g0;
+            for(size_t k=0; k<dom.Nneigh; ++k)
+            {
+                dom.F[ix][iy][0][k] = dom.Feq(k,1.0,vtemp);            
+                dom.Ftemp[ix][iy][0][k] = dom.Feq(k,1.0,vtemp);            
+            }
+        }else{
+            double yy = (double) iy;
+            double uy = dat.g/(2.0*dat.nu)*(H*(yy-py) - (yy-py)*(yy-py)); 
+            Vec3_t vtemp(uy, 0, 0);
+            // Vec3_t vtemp((double) dat.vb, 0, 0);
+            dom.Rho[ix][iy][0] = 1.0;
+            dom.Vel[ix][iy][0] = vtemp;
+            dom.BForce[ix][iy][0] = dat.g0;
+            for(size_t k=0; k<dom.Nneigh; ++k)
+            {
+                dom.F[ix][iy][0][k] = dom.Feq(k,1.0,vtemp);            
+                dom.Ftemp[ix][iy][0][k] = dom.Feq(k,1.0,vtemp);            
+            }
+        }
+        
+
+    }
+}
+
+
 
 double random(double a, double b)
 {
@@ -48,16 +95,10 @@ int main (int argc, char **argv) try
     size_t Rn = 10;
     double gap = 0.3;
     double nu = 0.01;
-    double ratio = 0.5;
-    bool initfromfile = false;
-    char *h5name = NULL;
+    double ratio = 0.001;
     if(argc>=2) Nproc = atoi(argv[1]);
     if(argc>=3) ratio = atof(argv[2]);
-    if(argc>=4)
-    {
-        initfromfile = true;
-        h5name = argv[3];
-    }
+    
     int gapn = std::ceil(gap*Nx);
     std::cout<<"extra gap n "<<gapn<<std::endl;
     size_t nx = 2*Rn*Nx+gapn;
@@ -81,7 +122,10 @@ int main (int argc, char **argv) try
     my_dat.nu = nu;
     my_dat.g = -gy*ratio;
     my_dat.R = R;
+    my_dat.gap = gap;
+    my_dat.Ny = Ny;
     Vec3_t g0(my_dat.g,0.0,0.0);
+    my_dat.g0 = g0;
     std::cout<<"gx = "<<my_dat.g<<std::endl;
     dom.Nproc = Nproc;       
 
@@ -113,8 +157,8 @@ int main (int argc, char **argv) try
         pos = R+gap,(2*ipy+3)*R+gap,0.0;
         for(int ipx=0; ipx<Nx; ++ipx)
         {
-            // Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1),0.0);
-            Vec3_t dxr(0.0,0.0,0.0);
+            Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1),0.0);
+            // Vec3_t dxr(0.0,0.0,0.0);
             dom.Particles.push_back(DEM::Disk(-pnum, pos+dxr, v, w, rhos, R, dom.dtdem));
             // std::cout<<pos(0)<<" "<<pos(1)<<std::endl;
             dxp = 2.0*R+gap,0.0,0.0;
@@ -152,14 +196,10 @@ int main (int argc, char **argv) try
 
     Vec3_t v0(0.0,0.0,0.0);
     dom.IsF = true;
-    if(initfromfile)
-    {
-        dom.InitialFromH5(h5name,g0);
-
-    }else{
-        dom.Initial(rho,v0,g0);
-
-    }
+    
+    // dom.InitialFromH5(h5name,g0);
+    // dom.Initial(rho,v0,g0);
+    Initial(dom, dom.UserData);
 
 
     double Tf = 3;

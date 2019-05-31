@@ -2,15 +2,17 @@ clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
 prefix = '/media/pzhang/My Book/move-bed-tmp/move_bed_2/';
-for iiii = 4:4
+prefix = '/media/pzhang/My Book/move-bed-tmp/macondo/0.1r_10.0Ga_0.3gap/';
+for iiii = 1:1
 % if(iiii==1)
 %     middle = 'test_mvbed_';
 % else
-    middle = strcat('test_mvbed_',num2str(iiii-1),'_');
+%     middle = strcat('test_mvbed_',num2str(iiii-1),'_');
+    middle = 'test_mvbed_c_cti2_';
 % end
 R = 10;
 LP = 40;
-num = 1:999;
+num = 1:986;
 for i = 1:numel(num)
     name = strcat(prefix,middle,num2str(num(i),'%04d'),'.h5');
     nx = h5read(name,'/Nx');
