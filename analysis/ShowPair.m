@@ -1,8 +1,9 @@
 clear
 clc
 prefix = '/home/pzhang/chen/move-bed/';
-middle = 'test_mvbed_c_';
-for i = 1:1
+prefix = '/media/pzhang/Ubuntu 16.0/';
+middle = 'test_wu2_';
+for i = 129:129
 name = strcat(prefix,middle,num2str(i,'%04d'),'.h5');
 pos = h5read(name,'/Ppositionb');
 nx = h5read(name,'/Nx');
@@ -23,7 +24,7 @@ color = {'r','g'};
 figure(1)
 viscircles(Pos(1,1:2),R,'color',char(color(ceil(1/Np))));
 hold on
-quiver(Pos(:,1),Pos(:,2),Pforce(:,1),Pforce(:,2),0.5)
+quiver(Pos(:,1),Pos(:,2),Pforce(:,1),Pforce(:,2),1)
 plot(Pos(1,1),Pos(1,2),'b.')
 text(Pos(1,1),Pos(1,2),num2str(1-1))
 for j=2:Np*2

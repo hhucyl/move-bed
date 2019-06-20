@@ -24,6 +24,10 @@
 #include<iterator>
 #include<utility>
 #include<algorithm>
+#include<unordered_map>
+#include<map>
+
+
 
 // Mechsys
 #include <mechsys/linalg/matvec.h>
@@ -184,9 +188,10 @@ public:
     void StartSolve();
     void EndSolve();
     void SetBounceBack();
-    void update_pair_sub(DEM::DiskPair &pair, DEM::Disk* P1, DEM::Disk* P2);
+    void update_pair_sub(DEM::DiskPair* pair, DEM::Disk* P1, DEM::Disk* P2);
     void join_contactlist_sub(std::set<std::pair<int,int>> *myset_private, std::vector<std::pair<int,int>> &ListofContacts);
     void UpdateParticlesContacts();
+    void UpdateParticlesContactsVL();
     void UpdateParticlesContactsIBM();
     void UpdateParticlePairForce();
     void LeaveAndForcedForce();
@@ -271,7 +276,9 @@ public:
     // std::vector<std::pair<int,int>> ListofContactsPP;
     // std::vector<std::pair<int,int>> ListofContactsPG;
     std::vector<RW::Particle> RWParticles;
-
+    // std::unordered_map<size_t, std::pair<int,int>> FMap;
+    std::map<std::pair<int,int>, Vec3_t> Friction;
+    std::map<std::pair<int,int>, Vec3_t> Rolling;
     double dtdem;
     Vec3_t Box;
     int modexy;

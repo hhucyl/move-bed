@@ -181,7 +181,8 @@ inline void Disk::Leave(int modexy, Vec3_t &Box)
 inline void Disk::Translate(double dt)
 {
     //std::cout << F(0) << " " << M << " " << V(0) << std::endl;
-    F = Fh+Fc+Ff+Flb;
+    // F = Fh+Fc+Ff+Flb;
+    F = Fh+Fc+Ff;
     // F = Fc+Ff;
     Vec3_t Ft = F;
     if (vf(0)) Ft(0) = 0.0;

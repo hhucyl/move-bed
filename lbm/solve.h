@@ -139,6 +139,7 @@ inline void Domain::SolveIBM(double Tf, double dtout, char const * TheFileKey, p
             //update particles contact
             if(flag){
                 UpdateParticlesContacts();
+                // UpdateParticlesContactsVL();
             }
             
             UpdateParticlePairForce();
@@ -147,7 +148,18 @@ inline void Domain::SolveIBM(double Tf, double dtout, char const * TheFileKey, p
             MoveParticles();
             // GhostParticles.clear();
             // GhostParticles.assign(Particles.begin(), Particles.end());
-            // GhostPeriodic(); 
+            // GhostPeriodic();
+
+            //test for friction
+            // for(size_t ip=0; ip<Particles.size(); ++ip)
+            // {
+            //     if(Particles[ip].IsFree()) continue;
+
+            //     Particles[ip].X = Particles[ip+1].X;
+            //     Particles[ip].X(1) = Particles[ip].Xb(1);
+            //     Particles[ip].V = 0.0,0.0,0.0; 
+            // }
+
         }
         
 

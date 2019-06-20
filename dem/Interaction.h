@@ -34,6 +34,7 @@ public:
 
     //Methods
     void CalcForce      (double dt);
+    void CalcD      ();
     bool UpdateContacts (double Alpha);
 
 #ifdef USE_THREAD
@@ -72,7 +73,8 @@ DiskPair::DiskPair(Disk * Dp1, Disk * Dp2)
     Beta= 2.0*ReducedValue(P1->Beta,P2->Beta);
     SFr= OrthoSys::O;
     Fdr= OrthoSys::O;
-    double me = 2.0*ReducedValue(P1->M,P2->M);
+    double me = ReducedValue(P1->M,P2->M);
+    // std::cout<<Gn<<std::endl;
     if (Gn < 0.0)
     {
         if (fabs(Gn)>1.0) throw new Fatal("CInteractonSphere the restitution coefficient is greater than 1");
@@ -84,6 +86,13 @@ DiskPair::DiskPair(Disk * Dp1, Disk * Dp2)
 #ifdef USE_THREAD
     pthread_mutex_init(&lck,NULL);
 #endif
+}
+
+void DiskPair::CalcD()
+{   
+    double dist  = norm(P2->X - P1->X);
+    delta = P1->R + P2->R - dist;
+    if(P1->X(0)<(-10*P1->R)||P2->X(0)<(-10*P2->R)) delta = -1000;//couple with periodic
 }
 
 void DiskPair::CalcForce(double dt)
@@ -102,7 +111,8 @@ void DiskPair::CalcForce(double dt)
         //Force
         Vec3_t n    = (P2->X - P1->X)/dist;
         Vec3_t x    = P1->X+n*((P1->R*P1->R-P2->R*P2->R+dist*dist)/(2*dist));
-        Vec3_t Fn   = Kn*std::pow(delta,1.5)*n;
+        // Vec3_t Fn   = Kn*std::pow(delta,1.5)*n;
+        Vec3_t Fn   = Kn*delta*n;
         Vec3_t t1,t2,x1,x2;
         Rotation(P1->W,P1->Q,t1);
         Rotation(P2->W,P2->Q,t2);
@@ -119,6 +129,8 @@ void DiskPair::CalcForce(double dt)
             SFr = Mu*norm(Fn)/Kt*tan;
         }
         Vec3_t F    = Fn + Gn*dot(n,Vrel)*n + Kt*SFr + Gt*vt;
+        // Vec3_t F    = Fn + Gn*dot(n,Vrel)*n;
+        // std::cout<<F(1)<<std::endl;
         if (dot(F,n)<0) F-=dot(F,n)*n;
 
         

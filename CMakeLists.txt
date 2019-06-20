@@ -26,11 +26,13 @@ SET(PROGS
 #    test_circle_move
 #    test_circle_spin
 #    test_circle2
-#    test_collision
+    test_collision
+    test_friction
 #    test_periodic
 #    test_periodic1
 #    test_periodic2
     test_mvbed
+    test_neighbor
     test_mvbed_compact
     test_mvbed_small
     test_mvbedrw

@@ -21,6 +21,26 @@ inline void Domain::join_contactlist_sub(std::set<std::pair<int,int>> *myset_pri
     }
 }
 
+inline void Domain::UpdateParticlesContactsVL()
+{
+    std::set<std::pair<int,int>> myset_private[Nproc];
+    #pragma omp parallel for schedule(static) num_threads(Nproc)
+    for(size_t i=0; i<Particles.size()-1; ++i)
+    for(size_t j=i+1; j<Particles.size(); ++j)
+    {
+        DEM::Disk *P1 = &Particles[i];
+        DEM::Disk *P2 = &Particles[j];
+        double dist  = norm(P2->X - P1->X);
+        double delta = dist - P1->R - P2->R;
+        if(delta>0.5*(P1->R+P2->R))
+        {
+            std::pair<int,int> temp_pair(std::min(i,j),std::max(i,j));
+            myset_private[omp_get_thread_num()].insert(temp_pair);
+        }
+    }
+    join_contactlist_sub(myset_private,ListofContacts);
+}
+
 inline void Domain::UpdateParticlesContactsIBM()
 {
     size_t nx = Ndim(0);
@@ -130,20 +150,20 @@ inline void Domain::UpdateParticlesContacts()
     
 }
 
-inline void Domain::update_pair_sub(DEM::DiskPair &pair, DEM::Disk* P1, DEM::Disk* P2)
+inline void Domain::update_pair_sub(DEM::DiskPair* pair, DEM::Disk* P1, DEM::Disk* P2)
 {
     // double eal = P1->eal;
     // double RR = 2*P1->R*P2->R/(P1->R+P2->R);
     // double ee = -pair.delta/RR;
-    if(pair.delta>0)
+    if(pair->delta>0)
     {
         omp_set_lock  (&P1->lck);
-            P1->Fc += pair.F1;
-            P1->Tc += pair.T1;
+            P1->Fc += pair->F1;
+            P1->Tc += pair->T1;
         omp_unset_lock(&P1->lck);
         omp_set_lock  (&P2->lck);
-            P2->Fc += pair.F2;
-            P2->Tc += pair.T2;
+            P2->Fc += pair->F2;
+            P2->Tc += pair->T2;
         omp_unset_lock(&P2->lck);
     }else{
         // if(ee<=eal && ee>0)
@@ -159,9 +179,71 @@ inline void Domain::update_pair_sub(DEM::DiskPair &pair, DEM::Disk* P1, DEM::Dis
     
 }
 
+// inline void Domain::UpdateParticlePairForce()
+// {
+//     //ordinary particle
+//     #pragma omp parallel for schedule(static) num_threads(Nproc)
+//     for(size_t i=0; i<ListofContacts.size();++i)
+//     {
+//         int ip1 = ListofContacts[i].first;
+//         int ip2 = ListofContacts[i].second;
+//         if(!Particles[ip1].IsFree() && !Particles[ip2].IsFree()) continue;
+//         DEM::Disk* P1 = &Particles[ip1];
+//         DEM::Disk* P2 = &Particles[ip2];
+//         DEM::Disk* GP1 = &GhostParticles[ip1];
+//         DEM::Disk* GP2 = &GhostParticles[ip2];
+//         DEM::DiskPair pair0(P1,P2);
+//         DEM::DiskPair pair1(GP1,P2);
+//         DEM::DiskPair pair2(P1,GP2);
+//         DEM::DiskPair pair3(GP1,GP2);
+//         pair0.CalcForce(dtdem);
+//         pair1.CalcForce(dtdem);
+//         pair2.CalcForce(dtdem);
+//         pair3.CalcForce(dtdem);
+//         double delta[4] = {pair0.delta, pair1.delta, pair2.delta, pair3.delta};
+//         int index = std::distance(delta,std::max_element(delta,delta+4));
+//         switch(index)
+//         {
+//             case 0:
+//                 update_pair_sub(pair0,P1,P2);
+//                 // std::cout<<Time<<" "<<pair0.delta<<" "<<Particles[ip1].Fc<<" PP "<<ip1<<" "<<ip2<<std::endl;
+//                 // std::cout<<pair0.delta<<" "<<pair1.delta<<" "<<pair2.delta<<" "<<pair3.delta<<std::endl;
+//                 break;
+//             case 1:
+//                 update_pair_sub(pair1,P1,P2);
+//                 // std::cout<<Time<<" "<<pair1.delta<<" "<<Particles[ip1].Fc<<" GP "<<ip1<<" "<<ip2<<std::endl;
+//                 // std::cout<<pair0.delta<<" "<<pair1.delta<<" "<<pair2.delta<<" "<<pair3.delta<<std::endl;
+
+//                 break;
+//             case 2:
+//                 update_pair_sub(pair2,P1,P2);
+//                 // std::cout<<Time<<" "<<pair2.delta<<" "<<Particles[ip1].Fc<<" PG "<<ip1<<" "<<ip2<<std::endl;
+//                 // std::cout<<pair0.delta<<" "<<pair1.delta<<" "<<pair2.delta<<" "<<pair3.delta<<std::endl;
+
+//                 break;
+//             case 3:
+//                 update_pair_sub(pair3,P1,P2);
+//                 // std::cout<<Time<<" "<<pair3.delta<<" "<<Particles[ip1].Fc<<" GG "<<ip1<<" "<<ip2<<std::endl;
+//                 // std::cout<<pair0.delta<<" "<<pair1.delta<<" "<<pair2.delta<<" "<<pair3.delta<<std::endl;
+
+//                 break;
+//             default:
+//                 throw new Fatal("WRONG IN Pair!!!");
+//         }
+        
+        
+        
+//     }
+    
+// }
+
+
+
 inline void Domain::UpdateParticlePairForce()
 {
     //ordinary particle
+    std::map<std::pair<int,int>, Vec3_t> friction[Nproc];
+    std::map<std::pair<int,int>, Vec3_t> rolling[Nproc];
     #pragma omp parallel for schedule(static) num_threads(Nproc)
     for(size_t i=0; i<ListofContacts.size();++i)
     {
@@ -176,44 +258,64 @@ inline void Domain::UpdateParticlePairForce()
         DEM::DiskPair pair1(GP1,P2);
         DEM::DiskPair pair2(P1,GP2);
         DEM::DiskPair pair3(GP1,GP2);
-        pair0.CalcForce(dtdem);
-        pair1.CalcForce(dtdem);
-        pair2.CalcForce(dtdem);
-        pair3.CalcForce(dtdem);
+        pair0.CalcD();
+        pair1.CalcD();
+        pair2.CalcD();
+        pair3.CalcD();
         double delta[4] = {pair0.delta, pair1.delta, pair2.delta, pair3.delta};
         int index = std::distance(delta,std::max_element(delta,delta+4));
+        DEM::DiskPair* pair = NULL;
         switch(index)
         {
             case 0:
-                update_pair_sub(pair0,P1,P2);
-                // std::cout<<Time<<" "<<pair0.delta<<" "<<Particles[ip1].Fc<<" PP "<<ip1<<" "<<ip2<<std::endl;
-                // std::cout<<pair0.delta<<" "<<pair1.delta<<" "<<pair2.delta<<" "<<pair3.delta<<std::endl;
+                pair = &pair0;
+                // std::cout<<0<<std::endl;
                 break;
             case 1:
-                update_pair_sub(pair1,P1,P2);
-                // std::cout<<Time<<" "<<pair1.delta<<" "<<Particles[ip1].Fc<<" GP "<<ip1<<" "<<ip2<<std::endl;
-                // std::cout<<pair0.delta<<" "<<pair1.delta<<" "<<pair2.delta<<" "<<pair3.delta<<std::endl;
+                pair = &pair1;
+                // std::cout<<1<<std::endl;
 
                 break;
             case 2:
-                update_pair_sub(pair2,P1,P2);
-                // std::cout<<Time<<" "<<pair2.delta<<" "<<Particles[ip1].Fc<<" PG "<<ip1<<" "<<ip2<<std::endl;
-                // std::cout<<pair0.delta<<" "<<pair1.delta<<" "<<pair2.delta<<" "<<pair3.delta<<std::endl;
+                pair = &pair2;
+                // std::cout<<2<<std::endl;
 
                 break;
             case 3:
-                update_pair_sub(pair3,P1,P2);
-                // std::cout<<Time<<" "<<pair3.delta<<" "<<Particles[ip1].Fc<<" GG "<<ip1<<" "<<ip2<<std::endl;
-                // std::cout<<pair0.delta<<" "<<pair1.delta<<" "<<pair2.delta<<" "<<pair3.delta<<std::endl;
+                pair = &pair3;
+                // std::cout<<3<<std::endl;
 
                 break;
             default:
-                throw new Fatal("WRONG IN Pair!!!");
+                throw new Fatal("WRONG IN Pair1!!!");
+        }
+        if(pair==NULL) throw new Fatal("WRONG IN Pair2!!!");
+        if(pair->delta>0){
+            // double dist  = norm(pair->P2->X - pair->P1->X);
+            // double delta = pair->P1->R + pair->P2->R - dist;
+            // std::cout<<Time<<" "<<pair->delta<<" "<<delta<<" "<<pair->P2->X<<" "<<pair->P1->X<<std::endl;
+            auto pairnum = ListofContacts[i];
+            if(Friction.count(pairnum)>0) pair->SFr = Friction[pairnum];
+            if(Rolling.count(pairnum)>0) pair->Fdr = Rolling[pairnum];
+            pair->CalcForce(dtdem);
+            update_pair_sub(pair,P1,P2);
+            friction[omp_get_thread_num()][pairnum] = pair->SFr;
+            rolling[omp_get_thread_num()][pairnum] = pair->Fdr;
         }
         
         
         
     }
+    std::map<std::pair<int,int>, Vec3_t> fmap;
+    std::map<std::pair<int,int>, Vec3_t> rmap;
+    for(size_t i=0; i<Nproc; ++i)
+    {
+        fmap.insert(friction[i].begin(),friction[i].end());
+        rmap.insert(rolling[i].begin(),rolling[i].end());
+    }
+    Friction = fmap;
+    Rolling = rmap;
+
     
 }
 
