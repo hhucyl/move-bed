@@ -32,10 +32,12 @@ SET(PROGS
 #    test_periodic1
 #    test_periodic2
     test_mvbed
+    test_slide
     test_neighbor
     test_mvbed_compact
     test_mvbed_small
     test_mvbedrw
+    test_q
 #    test_particle_reflect
 #    test_cd
 )

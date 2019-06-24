@@ -97,6 +97,24 @@ inline void Domain::InitialFromH5(char const * TheFileKey, Vec3_t &g0)
         H5LTread_dataset_double(file_id,"/PW",PW);
         double *PWb = new double[3*NP*2];
         H5LTread_dataset_double(file_id,"/PWb",PWb);
+        int N[1];
+        std::cout<<1<<std::endl;
+        H5LTread_dataset_int(file_id,"/PListRNum",N);
+        int NLR = N[0];
+        int *PlistR = new int[NLR*2];
+        std::cout<<2<<std::endl;
+
+        H5LTread_dataset_int(file_id,"/PListR",PlistR);
+        double *SFR = new double[NLR*3];
+        std::cout<<3<<std::endl;
+
+        H5LTread_dataset_double(file_id,"/SFR",SFR);
+        double *FDR = new double[NLR*3];
+        std::cout<<4<<std::endl;
+
+        H5LTread_dataset_double(file_id,"/FDR",FDR);
+
+
         for(int i=0; i<NP; ++i)
         {
             DEM::Disk *Pa = &Particles[i];
@@ -106,6 +124,21 @@ inline void Domain::InitialFromH5(char const * TheFileKey, Vec3_t &g0)
             Pa->W = PW[3*i], PW[3*i+1], PW[3*i+2]; 
             Pa->Wb = PWb[3*i], PWb[3*i+1], PWb[3*i+2];
         }
+
+        std::map<std::pair<int,int>,Vec3_t> fmap;
+        std::map<std::pair<int,int>,Vec3_t> rmap;
+        for(int i=0; i<NLR; ++i)
+        {
+            std::pair<int,int> p;
+            p.first = PlistR[2*i];
+            p.second = PlistR[2*i+1];
+            Vec3_t sfr(SFR[3*i],SFR[3*i+1],SFR[3*i+2]);
+            Vec3_t fdr(FDR[3*i],FDR[3*i+1],FDR[3*i+2]);
+            fmap[p] = sfr;
+            rmap[p] = fdr;
+        }
+        Friction = fmap;
+        Rolling = rmap;
 
         delete[] Ppos;
         delete[] Pposb;

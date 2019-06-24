@@ -3,10 +3,10 @@ import h5py as h5
 import matplotlib.pyplot as plt
 import sys
 
-prefix = "/media/pzhang/My Book/move-bed-tmp/macondo/"
-prefix = prefix + "0.003r_20.0Ga_0.3gap/"
+prefix = "/media/pzhang/Elements/move-bed-tmp/macondo/"
+prefix = prefix + "5e3Re_20Ga_0.3gap/"
 prefix = prefix + "test_mvbed_c_"
-Py = 41
+Py = 21
 Px = 160
 Np = Py*Px
 num = np.arange(int(sys.argv[1])+1)
@@ -22,7 +22,7 @@ for i in range(len(num)):
 	vel = np.array(f['Velocity_0']);
 	vx = vel[0:-2:3]
 	vx = vx.reshape((Ny[0],Nx[0]))
-	vvx = -np.average(vx,axis=1)
+	vvx = np.abs(np.average(vx,axis=1))
 	
 	plt.subplot(3,2,1)
 	plt.plot(vvx,np.arange(Ny[0]))
@@ -35,7 +35,7 @@ for i in range(len(num)):
 	vx = np.array(vx)
 	idx = int(Nx[0]/2)
 	vvvx = vx[:,idx]
-	Vx.append(-vvvx.sum())
+	Vx.append(np.abs(vvvx.sum()))
 	plt.plot(nn,Vx,'*')
 	plt.ylabel(r'$\sum u_x$')
 	plt.xlabel(r'num')

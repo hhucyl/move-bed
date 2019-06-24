@@ -87,7 +87,6 @@ double random(double a, double b)
   
 int main (int argc, char **argv) try
 {
-    
     std::srand((unsigned)time(NULL));    
     size_t Nproc = 12;
     int Nx = 160;
@@ -111,7 +110,7 @@ int main (int argc, char **argv) try
     double dx = 1.0;
     double dt = 1.0;
     double R = (double) Rn;
-    double Ga = 20.0;
+    double Ga = 40.0;
     double rho = 1.0;
     double rhos = 2.0;
     double gy = Ga*Ga*nu*nu/((8*R*R*R)*(rhos/rho-1));
@@ -180,8 +179,8 @@ int main (int argc, char **argv) try
         dom.Particles[ip].Gn = -0.3;
         dom.Particles[ip].Kt = 2.5;
         dom.Particles[ip].Mu = 0.4;
-        // dom.Particles[ip].Eta = 0.0;
-        // dom.Particles[ip].Beta = 0.0;
+        dom.Particles[ip].Eta = 0.0;
+        dom.Particles[ip].Beta = 0.0;
         dom.Particles[ip].Rh = 0.8*R;
         // dom.Particles[ip].FixVeloc();
 
@@ -201,7 +200,7 @@ int main (int argc, char **argv) try
     Vec3_t v0(0.0,0.0,0.0);
     dom.IsF = true;
     
-    // dom.InitialFromH5(h5name,g0);
+    // dom.InitialFromH5("test_mvbed_c_0046.h5",g0);
     // dom.Initial(rho,v0,g0);
     Initial(dom, dom.UserData);
 
@@ -212,7 +211,7 @@ int main (int argc, char **argv) try
     dom.Box = 0.0,(double) nx-1, 0.0;
     dom.modexy = 0;
     //solving
-    dom.SolveIBM( Tf, dtout, "test_mvbed_c", NULL, NULL);
+    dom.SolveIBM( Tf, dtout, "test_mvbed_c1", NULL, NULL);
     
     return 0;
 }MECHSYS_CATCH

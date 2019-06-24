@@ -105,6 +105,9 @@ void Domain::WriteXDMF(char const * FileKey)
         double *PWb = NULL;
         int *Ptag = NULL;
         int *Plist = NULL;
+        int *PlistR = NULL;
+        double *SFR = NULL;
+        double *FDR = NULL;
         // int *PlistPP = NULL;
         // int *PlistPG = NULL;
 
@@ -114,6 +117,7 @@ void Domain::WriteXDMF(char const * FileKey)
 
         int NP = Particles.size()*2;
         int NL = ListofContacts.size()*2;
+        int NLR = Friction.size();
 
         // int Npp;
         // int NL = ListofContactsPP.size()*2;
@@ -132,6 +136,9 @@ void Domain::WriteXDMF(char const * FileKey)
             PWb = new double[3*NP];
             Ptag = new int[NP];
             Plist = new int[NL];
+            PlistR = new int[NLR*2];
+            SFR = new double[NLR*3];
+            FDR = new double[NLR*3];
 
             
             // Ppoints = new double[3*NP*Npp];
@@ -232,6 +239,25 @@ void Domain::WriteXDMF(char const * FileKey)
                 Plist[2*il] = ListofContacts[il].first;
                 Plist[2*il+1] = ListofContacts[il].second;
             }
+            size_t ilr = 0;
+            for(auto it=Friction.begin(); it!=Friction.end(); ++it)
+            {
+                PlistR[2*ilr] = it->first.first;
+                PlistR[2*ilr+1] = it->first.second;
+                SFR[3*ilr] = (it->second)(0);
+                SFR[3*ilr+1] = (it->second)(1);
+                SFR[3*ilr+2] = (it->second)(2);
+                ++ilr;
+            }
+            ilr = 0;
+            for(auto it=Rolling.begin(); it!=Rolling.end(); ++it)
+            {
+                FDR[3*ilr] = (it->second)(0);
+                FDR[3*ilr+1] = (it->second)(1);
+                FDR[3*ilr+2] = (it->second)(2);
+                ++ilr;
+            }
+
             // for(size_t il=0; il<ListofContactsPP.size(); ++il)
             // {
             //     PlistPP[2*il] = ListofContactsPP[il].first;
@@ -337,6 +363,20 @@ void Domain::WriteXDMF(char const * FileKey)
             dims[0] = NL;
             dsname.Printf("PList");        
             H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,Plist);
+            N[0] = NLR;
+            dims[0] = 1;
+            dsname.Printf("PListRNum");        
+            H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,N);
+            dims[0] = NLR*2;
+            dsname.Printf("PListR");
+            H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistR);
+            dims[0] = NLR*3;
+            dsname.Printf("SFR");
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,SFR);
+            dims[0] = NLR*3;
+            dsname.Printf("FDR");
+            H5LTmake_dataset_double(file_id,dsname.CStr(),1,dims,FDR);
+
             // dsname.Printf("PListPP");        
             // H5LTmake_dataset_int(file_id,dsname.CStr(),1,dims,PlistPP);
             // dims[0] = NLG;
@@ -384,6 +424,9 @@ void Domain::WriteXDMF(char const * FileKey)
             // delete [] PlistPP;
             // delete [] PlistPG;
             delete [] Plist;
+            delete [] PlistR;
+            delete [] SFR;
+            delete [] FDR;
 
             // delete [] Ppoints;
             // delete [] PNodeType;
