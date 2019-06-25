@@ -47,7 +47,7 @@ void Setup(LBM::Domain &dom, void *UD)
         V += dom.Vel[ix][iy][0](0); 
     }
     V /= (nx*ny);
-    std::cout<<dat.V - V<<std::endl;
+    // std::cout<<dat.V - V<<std::endl;
     Vec3_t g(dat.V - V,0,0);
     #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
     for(size_t ix=0; ix<nx; ++ix)
