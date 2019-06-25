@@ -4,10 +4,14 @@
 struct myUserData
 {
     std::ofstream oss_ss;
-    double vb;
+    double g;
     double nu;
     double R;
+    int Ny;
+    double gap;
     double rhos;
+    Vec3_t g0;
+    double V;
 };
 
 void Report(LBM::Domain &dom, void *UD)
@@ -33,27 +37,25 @@ void Report(LBM::Domain &dom, void *UD)
 
 void Setup(LBM::Domain &dom, void *UD)
 {
+    myUserData &dat = (*static_cast<myUserData *> (UD));
     size_t nx = dom.Ndim(0);
     size_t ny = dom.Ndim(1);
-    myUserData &dat = (*static_cast<myUserData *> (UD));
-    Vec3_t vvb(dat.vb,0.0,0.0);
-    // std::cout<<vvb<<std::endl;
-    #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
-    for(size_t ix=0;ix<nx;++ix)
-    {
-        double *f = dom.F[ix][ny-1][0];
-        double *f1 = dom.F[ix][ny-2][0];
-        double rho1 = dom.Rho[ix][ny-2][0];
-        Vec3_t vel1 = dom.Vel[ix][ny-2][0];
-        
-        for(size_t k=0; k<dom.Nneigh; ++k)
-        {
-            f[k] = dom.Feq(k,rho1,vvb) + f1[k] - dom.Feq(k,rho1,vel1);
-        }
-        Vec3_t idx(ix,ny-1,0);
-        dom.CalcPropsForCell(idx);
+    double V = 0;    
+    for(size_t ix=0; ix<nx; ++ix)
+    for(size_t iy=0; iy<ny; ++iy)
+    { 
+        V += dom.Vel[ix][iy][0](0); 
     }
+    V /= (nx*ny);
+    std::cout<<dat.V - V<<std::endl;
+    Vec3_t g(dat.V - V,0,0);
+    #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
+    for(size_t ix=0; ix<nx; ++ix)
+    for(size_t iy=0; iy<ny; ++iy)
+    {
+        dom.BForce[ix][iy][0] = g;
 
+    }
 }
 
 
@@ -62,21 +64,47 @@ void Initial(LBM::Domain &dom, void *UD)
     myUserData &dat = (*static_cast<myUserData *> (UD));
     size_t nx = dom.Ndim(0);
     size_t ny = dom.Ndim(1);
+
+    double py = dat.Ny*2*dat.R + (dat.Ny-1)*dat.gap;
+    double H = ((double) ny-1) - py;
+    std::cout<<"max vel "<<dat.g/(2.0*dat.nu)*H*H/4.0<<std::endl;
     for(size_t ix=0; ix<nx; ++ix)
     for(size_t iy=0; iy<ny; ++iy)
     {
-        Vec3_t vtemp((double) dat.vb*iy/(ny-1), 0, 0);
-        dom.Rho[ix][iy][0] = 1.0;
-        dom.Vel[ix][iy][0] = vtemp;
-        dom.BForce[ix][iy][0] = 0.0, 0.0, 0.0;
-        for(size_t k=0; k<dom.Nneigh; ++k)
+        if(iy<py)
         {
-            dom.F[ix][iy][0][k] = dom.Feq(k,1.0,vtemp);            
-            dom.Ftemp[ix][iy][0][k] = dom.Feq(k,1.0,vtemp);            
+            Vec3_t vtemp(0, 0, 0);
+            // Vec3_t vtemp((double) dat.vb, 0, 0);
+            dom.Rho[ix][iy][0] = 1.0;
+            dom.Vel[ix][iy][0] = vtemp;
+            dom.BForce[ix][iy][0] = dat.g0;
+            for(size_t k=0; k<dom.Nneigh; ++k)
+            {
+                dom.F[ix][iy][0][k] = dom.Feq(k,1.0,vtemp);            
+                dom.Ftemp[ix][iy][0][k] = dom.Feq(k,1.0,vtemp);            
+            }
+        }else{
+            double yy = (double) iy;
+            double uy = dat.g/(2.0*dat.nu)*(H*(yy-py) - (yy-py)*(yy-py)); 
+            Vec3_t vtemp(uy, 0, 0);
+            // Vec3_t vtemp((double) dat.vb, 0, 0);
+            dom.Rho[ix][iy][0] = 1.0;
+            dom.Vel[ix][iy][0] = vtemp;
+            dom.BForce[ix][iy][0] = dat.g0;
+            dat.V += uy;
+            for(size_t k=0; k<dom.Nneigh; ++k)
+            {
+                dom.F[ix][iy][0][k] = dom.Feq(k,1.0,vtemp);            
+                dom.Ftemp[ix][iy][0][k] = dom.Feq(k,1.0,vtemp);            
+            }
         }
+        
 
     }
+    dat.V /= (nx*ny);
+    std::cout<<dat.V<<std::endl;
 }
+
 
 
 double random(double a, double b)
@@ -87,27 +115,30 @@ double random(double a, double b)
   
 int main (int argc, char **argv) try
 {
-    
     std::srand((unsigned)time(NULL));    
     size_t Nproc = 12;
-    int Nx = 40;
-    int Ny = 40;
-    int Nduny = 10;
-    int Ndunx = 30;
+    int Nx = 160;
+    int Ny = 20;
     size_t Rn = 10;
+    double Re = 5e3;
+    size_t H = 500;
+    double vmax = 0.15;
+    double nu = 2.0/3.0*vmax*H/Re;
+    std::cout<<"nu "<<nu<<std::endl;
+
     double gap = 0.3;
-    double nu = 0.01;
-    double vb = 0.01;
     if(argc>=2) Nproc = atoi(argv[1]);
+    
     int gapn = std::ceil(gap*Nx);
+    int gapny = std::ceil(gap*Ny);
     std::cout<<"extra gap n "<<gapn<<std::endl;
     size_t nx = 2*Rn*Nx+gapn;
-    size_t ny = 2*Rn*(Ny+1)+4*Nduny*Rn;
+    size_t ny = 2*Rn*Ny+gapny+H;
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
     double R = (double) Rn;
-    double Ga = 20.0;
+    double Ga = 40.0;
     double rho = 1.0;
     double rhos = 2.0;
     double gy = Ga*Ga*nu*nu/((8*R*R*R)*(rhos/rho-1));
@@ -120,10 +151,14 @@ int main (int argc, char **argv) try
     myUserData my_dat;
     dom.UserData = &my_dat;
     my_dat.nu = nu;
-    my_dat.vb = vb;
+    my_dat.g = 8.0*nu*vmax/((double)H*(double)H);
     my_dat.R = R;
-    Vec3_t g0(0.0,0.0,0.0);
-    std::cout<<"vb = "<<my_dat.vb<<std::endl;
+    my_dat.gap = gap;
+    my_dat.Ny = Ny;
+    Vec3_t g0(my_dat.g,0.0,0.0);
+    my_dat.g0 = g0;
+    my_dat.V = 0;
+    std::cout<<"gx = "<<my_dat.g<<std::endl;
     dom.Nproc = Nproc;       
 
     //initial
@@ -154,47 +189,14 @@ int main (int argc, char **argv) try
         pos = R+gap,(2*ipy+3)*R+gap,0.0;
         for(int ipx=0; ipx<Nx; ++ipx)
         {
-            Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1),0.0);
-            // Vec3_t dxr(0.0,0.0,0.0);
+            // Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1),0.0);
+            Vec3_t dxr(0.0,0.0,0.0);
             dom.Particles.push_back(DEM::Disk(-pnum, pos+dxr, v, w, rhos, R, dom.dtdem));
             // std::cout<<pos(0)<<" "<<pos(1)<<std::endl;
-            
-
             dxp = 2.0*R+gap,0.0,0.0;
             pos = pos+dxp;
             pnum++;
         }   
-    }
-    Vec3_t posd1(R+gap,(2*Ny+3)*R+gap,0.0);
-    Vec3_t posd(R+2*R*(Ndunx-1)+gap*Ndunx,(2*Ny+3)*R+2*R*(Nduny-1)+gap*Nduny,0.0);
-    Vec3_t posd2(R+2*R*(Nx-1)+gap*Nx,(2*Ny+3)*R+gap,0.0);
-    double k1 = (posd(1)-posd1(1))/(posd(0)-posd1(0));
-    double k2 = (posd(1)-posd2(1))/(posd(0)-posd2(0));
-    //dune
-    for(int idy=0; idy<Nduny; ++idy)
-    {
-        double yt = posd1(1)+2*idy*R+idy*gap;
-        Vec3_t posts((yt-posd1(1))/k1+posd1(0),yt,0.0);
-        Vec3_t poste((yt-posd2(1))/k2+posd2(0),yt,0.0);
-        int Nt = std::ceil((poste(0)-posts(0))/(2*R));
-        for (int idx=0; idx<Nt; ++idx)
-        {
-            Vec3_t post(posts(0)+2*R*idx+gap*idx,yt,0.0);
-            Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1),0.0);
-            // Vec3_t dxr(0.0,0.0,0.0);
-            dom.Particles.push_back(DEM::Disk(-pnum, post+dxr, v, w, rhos, R, dom.dtdem));
-            
-            pnum++;
-        }
-        if(Nt==0)
-        {
-            Vec3_t dxr(random(-0.1,0.1),random(-0.1,0.1),0.0);
-
-            // Vec3_t dxr(0.0,0.0,0.0);
-            dom.Particles.push_back(DEM::Disk(-pnum, posd, v, w, rhos, R, dom.dtdem));
-
-        }
-        
     }
 
     std::cout<<"Particles number = "<<dom.Particles.size()<<std::endl;
@@ -210,14 +212,13 @@ int main (int argc, char **argv) try
         dom.Particles[ip].Beta = 0.0;
         dom.Particles[ip].Rh = 0.8*R;
         // dom.Particles[ip].FixVeloc();
-        // dom.Particles[ip].FixVeloc();
 
     }
     
     for(size_t ix=0; ix<nx; ix++)
     {
         dom.IsSolid[ix][0][0] = true;
-        // dom.IsSolid[ix][ny-1][0] = true;
+        dom.IsSolid[ix][ny-1][0] = true;
     }
     // for(size_t iy=0; iy<ny; iy++)
     // {
@@ -228,20 +229,18 @@ int main (int argc, char **argv) try
     Vec3_t v0(0.0,0.0,0.0);
     dom.IsF = true;
     
-    // dom.InitialFromH5(h5name,g0);
-
+    // dom.InitialFromH5("test_mvbed_c_0046.h5",g0);
     // dom.Initial(rho,v0,g0);
-
     Initial(dom, dom.UserData);
 
 
-    double Tf = 1e5;
+    double Tf = 5;
     
-    double dtout = 1e3;
+    double dtout = 1;
     dom.Box = 0.0,(double) nx-1, 0.0;
     dom.modexy = 0;
     //solving
-    dom.SolveIBM( Tf, dtout, "test_mvbed_s", Setup, NULL);
+    dom.SolveIBM( Tf, dtout, "test_mvbed_c1", Setup, NULL);
     
     return 0;
 }MECHSYS_CATCH
