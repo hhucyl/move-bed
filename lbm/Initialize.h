@@ -54,8 +54,10 @@ inline void Domain::InitialFromH5(char const * TheFileKey, Vec3_t &g0)
     hid_t file_id = H5Fopen(fn.CStr(),H5F_ACC_RDONLY,H5P_DEFAULT);
     double *Ff = new double[Nneigh*Ndim(0)*Ndim(1)*Ndim(2)];
     double *Ga = new double[Ndim(0)*Ndim(1)*Ndim(2)];
+    double *BF = new double[3*Ndim(0)*Ndim(1)*Ndim(2)];
     H5LTread_dataset_double(file_id,"/F_0",Ff);
     H5LTread_dataset_double(file_id,"/Gamma",Ga);
+    H5LTread_dataset_double(file_id,"/BForce_0",BF);
     size_t nn=0;
 	//fluid
     for (size_t iz=0; iz<Ndim(2); ++iz)
@@ -63,9 +65,10 @@ inline void Domain::InitialFromH5(char const * TheFileKey, Vec3_t &g0)
     for (size_t ix=0; ix<Ndim(0); ++ix)
     {
 		double * f  = F[ix][iy][iz];
+        Vec3_t bf(BF[3*nn],BF[3*nn+1],BF[3*nn+2]);
         Vel   [ix][iy][iz] = OrthoSys::O;
         Rho   [ix][iy][iz] = 0.0;
-        BForce[ix][iy][iz] = g0;
+        BForce[ix][iy][iz] = bf;
         Gamma [ix][iy][iz] = Ga[nn];
 		for(size_t k=0; k<Nneigh; k++)
 		{
@@ -98,19 +101,19 @@ inline void Domain::InitialFromH5(char const * TheFileKey, Vec3_t &g0)
         double *PWb = new double[3*NP*2];
         H5LTread_dataset_double(file_id,"/PWb",PWb);
         int N[1];
-        std::cout<<1<<std::endl;
+        // std::cout<<1<<std::endl;
         H5LTread_dataset_int(file_id,"/PListRNum",N);
         int NLR = N[0];
         int *PlistR = new int[NLR*2];
-        std::cout<<2<<std::endl;
+        // std::cout<<2<<std::endl;
 
         H5LTread_dataset_int(file_id,"/PListR",PlistR);
         double *SFR = new double[NLR*3];
-        std::cout<<3<<std::endl;
+        // std::cout<<3<<std::endl;
 
         H5LTread_dataset_double(file_id,"/SFR",SFR);
         double *FDR = new double[NLR*3];
-        std::cout<<4<<std::endl;
+        // std::cout<<4<<std::endl;
 
         H5LTread_dataset_double(file_id,"/FDR",FDR);
 
@@ -145,6 +148,9 @@ inline void Domain::InitialFromH5(char const * TheFileKey, Vec3_t &g0)
         delete[] Pvec;
         delete[] PW;
         delete[] PWb;
+		delete[] PlistR;
+		delete[] SFR;
+		delete[] FDR;
     }
 
 

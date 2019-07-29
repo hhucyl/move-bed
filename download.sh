@@ -6,10 +6,10 @@ echo "last $2";
 server="uqyche38@awoonga.qriscloud.org.au"
 #server_prefix="~/macondo/0.2r_10.0Ga_0.3gap/"
 #server_prefix="~/macondo/small/1/"
-server_prefix="/30days/uqyche38/1e3Re_20Ga_0.3gap/"
+server_prefix="/30days/uqyche38/5e3Re_26.0Ga_0.3gap_a/"
 IFS=$'\n'
-#local_prefix=/media/pzhang/My\ Book/move-bed-tmp/macondo/0.003r_20.0Ga_0.3gap/
-local_prefix=/media/pzhang/Elements/move-bed-tmp/macondo/1e3Re_20Ga_0.3gap/
+#local_prefix=/media/pzhang/Elements/move-bed-tmp/macondo/0.002r_20.0Ga_0.3gap/
+local_prefix=/media/pzhang/Elements/move-bed-tmp/macondo/5e3Re_26.0Ga_0.3gap_a/
 #local_prefix=/media/pzhang/My\ Book/dune_shape/small/1/
 file_prefix="test_mvbed_c_"
 echo $server_line

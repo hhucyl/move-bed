@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import sys
 
 prefix = "/media/pzhang/Elements/move-bed-tmp/macondo/"
-prefix = prefix + "5e3Re_20Ga_0.3gap/"
+prefix = prefix + "5e3Re_26.0Ga_0.3gap_a/"
 prefix = prefix + "test_mvbed_c_"
 Py = 21
 Px = 160
@@ -61,15 +61,16 @@ for i in range(len(num)):
 	
 	plt.subplot(3,2,5)
 	pv = np.array(f['PVeloc'])
-	pvx = pv[0:3*Px*Py-2:3].reshape(Py,Px)
-	ppvx = -np.average(pvx,axis=1)
-	plt.plot(ppvx,np.arange(Py))
+	pvx = pv[0:3*Px*Py-2:3]
+	#ppvx = -np.average(pvx,axis=1)
+	#plt.plot(ppvx,np.arange(Py))
+	plt.plot(pvx,np.arange(Np))
 	plt.xlabel(r'$U_x^{p}$')
 	plt.ylabel(r'depth')
 	# plt.hold(True)
 	
 	plt.subplot(3,2,6)
-	Vpx.append(ppvx.sum())
+	Vpx.append(pvx.sum())
 	plt.plot(nn,Vpx,'*')
 	plt.ylabel(r'$\sum U_x^{p}$')
 	plt.xlabel(r'sum')

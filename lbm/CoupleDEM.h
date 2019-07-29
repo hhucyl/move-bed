@@ -330,7 +330,6 @@ inline void Domain::MoveParticles()
     }
 }
 
-
 inline void Domain::LeaveAndForcedForce()
 {
     #pragma omp parallel for schedule(static) num_threads(Nproc)

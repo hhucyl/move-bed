@@ -1,6 +1,9 @@
 *o
 *xmf
 *h5
+*.png
+*.svg
+*.npy
 /CMakeFiles
 CMakeCache.txt
 cmake_install.cmake

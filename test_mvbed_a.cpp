@@ -56,6 +56,7 @@ void Setup(LBM::Domain &dom, void *UD)
         dom.BForce[ix][iy][0] = g;
 
     }
+    // std::cout<<g(0)<<std::endl;
 }
 
 
@@ -229,18 +230,17 @@ int main (int argc, char **argv) try
     Vec3_t v0(0.0,0.0,0.0);
     dom.IsF = true;
     
-    // dom.InitialFromH5("test_mvbed_c_0046.h5",g0);
     // dom.Initial(rho,v0,g0);
     Initial(dom, dom.UserData);
+    dom.InitialFromH5("test_mvbed_c_0070.h5",g0);
 
 
-    double Tf = 5;
-    
-    double dtout = 1;
+    double Tf = 2e3;
+    double dtout = 1e3;
     dom.Box = 0.0,(double) nx-1, 0.0;
     dom.modexy = 0;
     //solving
-    dom.SolveIBM( Tf, dtout, "test_mvbed_c1", Setup, NULL);
+    dom.SolveIBM( Tf, dtout, "test_mvbed_c", Setup, NULL);
     
     return 0;
 }MECHSYS_CATCH

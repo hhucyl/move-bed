@@ -34,7 +34,7 @@ void Report(LBM::Domain &dom, void *UD)
             F+=dom.Flbm[ix][iy][0](1);
         }
         
-        dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<dom.Particles[0].X(1)<<Util::_8s<<dom.Particles[1].X(1)<<Util::_8s<<dom.Particles[1].X(1)-dom.Particles[0].X(1)<<Util::_8s<<dom.ListofContacts.size()<<std::endl;
+        dat.oss_ss<<Util::_10_6<<dom.Time<<Util::_8s<<dom.Particles[0].F(1)<<Util::_8s<<dom.Particles[0].Fc(1)<<Util::_8s<<dom.Particles[0].V(1)<<Util::_8s<<dom.Particles[1].V(1)<<std::endl;
         
     }
 }
@@ -66,10 +66,10 @@ int main (int argc, char **argv) try
 {
     
     
-    size_t Nproc = 8;
+    size_t Nproc = 1;
     size_t h = 400;
     double nu = 0.01;
-    int N=8;
+    int N=2;
     if(argc>=2) nu = atof(argv[1]);     
     if(argc>=3) N = atoi(argv[2]);
     if(argc>=4) Nproc = atoi(argv[3]); 
@@ -79,7 +79,7 @@ int main (int argc, char **argv) try
     size_t nz = 1;
     double dx = 1.0;
     double dt = 1.0;
-    double R = 10;
+    double R = 5;
     std::cout<<"R = "<<R<<std::endl;
     //nu = 1.0/30.0;
     std::cout<<nx<<" "<<ny<<" "<<nz<<std::endl;
@@ -104,33 +104,36 @@ int main (int argc, char **argv) try
     
     
     Vec3_t pos(nx*0.1+10.0*R,0.4*ny,0.0);
-    Vec3_t pos1(nx*0.1+10.0*R+1,0.6*ny,0.0);
+    // Vec3_t pos1(nx*0.1+10.0*R,0.4*ny+4*R+0.5*R,0.0);
+    Vec3_t pos1(nx*0.1+10.0*R,0.4*ny + 11,0.0);
     Vec3_t dxp(2.5*R,0.0,0.0);
     Vec3_t v(0.0,0.0,0.0);
+    Vec3_t v1(0.0,-0.1,0.0);
     Vec3_t w(0.0,0.0,0.0);
-    dom.dtdem = 0.001*dt;
+    dom.dtdem = 0.01*dt;
     for(size_t ip=0; ip<N/2; ++ip)
     {
         // std::cout<<pos<<std::endl;
-        dom.Particles.push_back(DEM::Disk(-ip, pos, v, w, rhos, R, dt));
-        dom.Particles.push_back(DEM::Disk(-ip, pos1, v, w, rhos, R, dt));
+        dom.Particles.push_back(DEM::Disk(-ip, pos, v, w, rhos, R, dom.dtdem));
+        dom.Particles.push_back(DEM::Disk(-ip, pos1, v1, w, rhos, R, dom.dtdem));
         pos = pos+dxp;
         pos1 = pos1+dxp;
     }
     std::cout<<"Particles number = "<<dom.Particles.size()<<std::endl;
     for(int ip=0; ip<N; ++ip)
     {
-        dom.Particles[ip].Ff = 0.0, std::pow(-1,ip)*M_PI*R*R*rhos*my_dat.g, 0.0;
-        dom.Particles[ip].Kn = 10;
-        dom.Particles[ip].Gn = 0.0;
+        //dom.Particles[ip].Ff = 0.0, std::pow(-1,ip)*M_PI*R*R*rhos*my_dat.g, 0.0;
+        dom.Particles[ip].Ff = 0.0, 0.0, 0.0;
+        dom.Particles[ip].Kn = 5;
+        dom.Particles[ip].Gn = 0.8;
         dom.Particles[ip].Kt = 0.0;
         dom.Particles[ip].Mu = 0.0;
         dom.Particles[ip].Eta = 0.0;
         dom.Particles[ip].Beta = 0.0;
-        dom.Particles[ip].Rh = R;
+        dom.Particles[ip].Rh = 0.8*R;
         dom.Particles[ip].nu = nu;
-        dom.Particles[ip].e1 = 1e-2;
-        dom.Particles[ip].eal = 0.125;
+        //dom.Particles[ip].e1 = 1e-2;
+        //dom.Particles[ip].eal = 0.125;
         
         // dom.Particles[ip].FixVeloc();
 
@@ -148,9 +151,9 @@ int main (int argc, char **argv) try
     Initial(dom,rho,v0,g0);
     // dom.InitialFromH5("test_2_1_0063.h5",g0);
 
-    double Tf = 1e4;
+    double Tf = 3e2;
     
-    double dtout = 1e2;
+    double dtout = 1;
     dom.IsF = true;
     dom.Box = 0.0, ny-1, 0.0;
     dom.modexy = 1;
