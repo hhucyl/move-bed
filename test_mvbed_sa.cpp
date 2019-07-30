@@ -56,6 +56,16 @@ void Setup(LBM::Domain &dom, void *UD)
         dom.BForce[ix][iy][0] = g;
 
     }
+    #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
+    for(size_t ix=0; ix<nx; ++ix)
+    {
+        double *f = dom.F[ix][ny-1][0];
+        f[4] = f[2];
+        f[7] = f[6];
+        f[8] = f[5];
+        Vec3_t idx(ix,ny-1,0);
+        dom.CalcPropsForCell(idx);
+    }
     // std::cout<<g(0)<<std::endl;
 }
 
@@ -86,7 +96,9 @@ void Initial(LBM::Domain &dom, void *UD)
             }
         }else{
             double yy = (double) iy;
-            double uy = dat.g/(2.0*dat.nu)*(H*(yy-py) - (yy-py)*(yy-py)); 
+            double Y = yy-py;
+            // double uy = dat.g/(2.0*dat.nu)*(H*(yy-py) - (yy-py)*(yy-py)); 
+            double uy = dat.g/(2.0*dat.nu)*(-0.25*((Y-H)*(Y-H)-H*H)); 
             Vec3_t vtemp(uy, 0, 0);
             // Vec3_t vtemp((double) dat.vb, 0, 0);
             dom.Rho[ix][iy][0] = 1.0;
@@ -139,7 +151,7 @@ int main (int argc, char **argv) try
     double dx = 1.0;
     double dt = 1.0;
     double R = (double) Rn;
-    double Ga = 40.0;
+    double Ga = 26.0;
     double rho = 1.0;
     double rhos = 2.0;
     double gy = Ga*Ga*nu*nu/((8*R*R*R)*(rhos/rho-1));
@@ -219,7 +231,7 @@ int main (int argc, char **argv) try
     for(size_t ix=0; ix<nx; ix++)
     {
         dom.IsSolid[ix][0][0] = true;
-        dom.IsSolid[ix][ny-1][0] = true;
+        // dom.IsSolid[ix][ny-1][0] = true;
     }
     // for(size_t iy=0; iy<ny; iy++)
     // {

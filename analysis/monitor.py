@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import sys
 
 prefix = "/media/pzhang/Elements/move-bed-tmp/macondo/"
-prefix = prefix + "5e3Re_26.0Ga_0.3gap_a/"
+prefix = prefix + "5e3Re_26.2Ga_0.3gap_a/"
 prefix = prefix + "test_mvbed_c_"
 Py = 21
 Px = 160
