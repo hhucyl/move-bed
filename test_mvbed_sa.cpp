@@ -40,6 +40,18 @@ void Setup(LBM::Domain &dom, void *UD)
     myUserData &dat = (*static_cast<myUserData *> (UD));
     size_t nx = dom.Ndim(0);
     size_t ny = dom.Ndim(1);
+    
+    #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
+    for(size_t ix=0; ix<nx; ++ix)
+    {
+        double *f = dom.F[ix][ny-1][0];
+        f[4] = f[2];
+        f[7] = f[6];
+        f[8] = f[5];
+        Vec3_t idx(ix,ny-1,0);
+        dom.CalcPropsForCell(idx);
+    }
+    
     double V = 0;    
     for(size_t ix=0; ix<nx; ++ix)
     for(size_t iy=0; iy<ny; ++iy)
@@ -56,16 +68,7 @@ void Setup(LBM::Domain &dom, void *UD)
         dom.BForce[ix][iy][0] = g;
 
     }
-    #pragma omp parallel for schedule(static) num_threads(dom.Nproc)
-    for(size_t ix=0; ix<nx; ++ix)
-    {
-        double *f = dom.F[ix][ny-1][0];
-        f[4] = f[2];
-        f[7] = f[6];
-        f[8] = f[5];
-        Vec3_t idx(ix,ny-1,0);
-        dom.CalcPropsForCell(idx);
-    }
+    
     // std::cout<<g(0)<<std::endl;
 }
 
