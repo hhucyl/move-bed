@@ -3,13 +3,13 @@ import h5py as h5
 import matplotlib.pyplot as plt
 import sys
 
-prefix = "/media/pzhang/Elements/move-bed-tmp/macondo/"
-prefix = prefix + "5e3Re_26.2Ga_0.3gap_a/"
-prefix = prefix + "test_mvbed_c_"
+prefix = "/PZ_Q/move-bed-tmp/"
+prefix = prefix + "5e3Re_26.0Ga_0.3gap_a/"
+prefix = prefix + "test_mvbed_c_1_"
 Py = 21
 Px = 160
 Np = Py*Px
-num = np.arange(int(sys.argv[1])+1)
+num = np.arange(89,922+1)
 nn = []
 Vx = []
 Vbx = []
