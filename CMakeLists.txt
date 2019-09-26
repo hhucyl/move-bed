@@ -30,7 +30,7 @@ SET(PROGS
 #    test_friction
     test_mvbed_a
     test_mvbed_sa
-    test_mvbed_sa1
+    test_mvbed_saa
 #    test_periodic
 #    test_periodic1
 #    test_periodic2
