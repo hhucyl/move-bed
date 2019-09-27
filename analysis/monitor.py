@@ -3,13 +3,13 @@ import h5py as h5
 import matplotlib.pyplot as plt
 import sys
 
-prefix = "/media/user/PZ_Q/move-bed-tmp/"
-prefix = prefix + "5e3Re_10.0Ga_0.3gap_sa/"
-prefix = prefix + "test_mvbed_c_"
-Py = 21
-Px = 160
+prefix = "/home/user/move-bed/"
+prefix = prefix + ""
+prefix = prefix + "test_mvbed_sa_"
+Py = 16
+Px = 20
 Np = Py*Px
-num = np.arange(0,826+1)
+num = np.arange(700,999+1)
 nn = []
 Vx = []
 Vbx = []
@@ -44,7 +44,6 @@ for i in range(len(num)):
 	
 	ax = plt.subplot(3,2,3)
 	pos = np.array(f['Pposition'])
-	ppy = pos[1:3*Py*Px-1:3].reshape(Py,Px)
 	py = np.max(pos[1:-1:3])
 	plt.plot(vvx[:int(py)],np.arange(np.size(vvx[:int(py)])))
 	# ax.set_ylim(np.min(vvx[:int(py)]),np.max(vvx[:int(py)]))

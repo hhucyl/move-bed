@@ -137,7 +137,7 @@ int main (int argc, char **argv) try
     int Ny = 15;
     size_t Rn = 10;
     double Re = 5e3;
-    size_t H = 100;
+    size_t H = 200;
     double nu = 0.001;
     double vmax = nu*Re/H*1.5;
     std::cout<<"vmax "<<vmax<<std::endl;
@@ -154,7 +154,7 @@ int main (int argc, char **argv) try
     double dx = 1.0;
     double dt = 1.0;
     double R = (double) Rn;
-    double Ga = 10.0;
+    double Ga = 60.0;
     double rho = 1.0;
     double rhos = 2.0;
     double gy = Ga*Ga*nu*nu/((8*R*R*R)*(rhos/rho-1));
@@ -250,7 +250,7 @@ int main (int argc, char **argv) try
     // dom.InitialFromH5("test_mvbed_c_0070.h5",g0);
 
 
-    double Tf = 1e4;
+    double Tf = 1e6;
     double dtout = 1e3;
     dom.Box = 0.0,(double) nx-1, 0.0;
     dom.modexy = 0;
