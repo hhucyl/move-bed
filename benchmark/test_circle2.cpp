@@ -1,4 +1,4 @@
-#include "./lbm/Domain.h"
+#include "../lbm/Domain.h"
 
 
 struct myUserData
@@ -59,7 +59,7 @@ int main (int argc, char **argv) try
 {
     
     
-    size_t Nproc = 12;
+    size_t Nproc = 4;
     // size_t h = 200;
     double nu = 0.05;
     int N=2;
