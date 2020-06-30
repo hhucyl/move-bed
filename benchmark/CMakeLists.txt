@@ -42,7 +42,7 @@ SET(PROGS
 #    test_mvbedrw
 #    test_q
 #    test_particle_reflect
-#    test_cd
+    test_cd
 )
 
 FOREACH(var ${PROGS})

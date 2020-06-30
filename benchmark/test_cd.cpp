@@ -1,4 +1,4 @@
-#include "./lbm/Domain.h"
+#include "../lbm/Domain.h"
 
 
 struct myUserData
@@ -110,7 +110,7 @@ int main (int argc, char **argv) try
     double dx = 1.0;
     double dt = 1.0;
     double R = 10.0;
-    double Re = 20.0;
+    double Re = 100.0;
     double U = 0.03;
     double nu = 2.0*R*(2.0/3.0*U)/Re;
     std::cout<<"nu =  "<<nu<<std::endl;
